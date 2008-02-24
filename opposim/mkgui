@@ -1,0 +1,13 @@
+#! /bin/bash
+
+#
+# opposim project. 
+#
+# Simple bash script to create a make file for a GUI build
+#
+
+DIR=~
+
+opp_makemake -f -x -u Tkenv -b $DIR/mobility-fw -c $DIR/mobility-fw/omnetppconfig -lxml2 \
+             -I/usr/include/libxml2 -I$DIR/mobility-fw/core/include -I$DIR/mobility-fw/contrib/include \
+             -L$DIR/mobility-fw/core/lib -lmfcore -L$DIR/mobility-fw/contrib/lib -lmfcontrib  
