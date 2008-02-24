@@ -1,0 +1,386 @@
+#!/usr/bin/env python
+
+"""
+rwpy 1.0
+
+Author: Kristjan V. Jonsson (kristjanvj@gmail.com)
+        (c) Kristjan V. Jonsson (2007)
+        
+Part of the MobiTrace toolbox of the OppoNet project. OppoNet is a open-source
+effort to create software and modules for support of modeling of opportunistic
+wireless systems in OMNeT++. Project hompage: http://www.ee.kth.se/lcn/opponet.
+
+rwpy generates a trace file of node create and waypoint events using the
+random waypoint mobility model.
+
+Usage:
+  rwpy {options} [filename]
+    where options are:
+       -h|--help      Display help text
+       -n|--nodes     Number of generated nodes (default 10)
+       -t|--time      Scenario time (default 3600 sec)
+       -x|--xmax      Scenario width (default 1000 m)
+       -y|--ymax      Scenario height (default 1000 m)
+       -v|--velocity  Mean velocity (m/s)
+       -s|--vel_sd    Standard deviation of the velocity 
+       -p|--pause     Mean pause time (sec)
+       -d|--pause_sd  Standard deviation of the pause times
+
+Random waypoint is a simple mobility model which works as follows:
+ - A node is initialized at a uniformly distributed location within a fixed boundary.
+ - The node picks a new waypoint after an optional pause, which is also
+   selected from a random distribution.
+ - The node navigates towards this point, interpolating a new position at 
+   each discrete update.
+ - Upon arriving a the new location, the node selects a new waypoint, optionally
+   waiting before starting its journey towards the new location.
+ This process is repeated for the duration of the simulation.
+ 
+ A create event is added when each node is created. Similarily, a destroy event
+ is added for each created node at the end of the simulation. A random number of
+ waypoints are then added so that the journey time of the node adds up to the total
+ simulation time.
+
+ The accuracy of the random waypoint model has recently been called into 
+ question in a number of articles, among others one by Navidi and Camp from 2003.
+ They however provide a number of guidelines for initializing the nodes to
+ increase the accuracy of the simulation. This implemenation follows the 
+ guidelines set forth by Navidi and Camp to initialize initial location of
+ the nodes to be consistent with the expected steady state distribution.
+ Note: The initial paused state distribution suggested by Navidi and Camp
+ is not presently implemented.
+
+ The velocity and pause times are drawn from a truncated normal distribution.
+ The zero speed problem is addressed using a minimum speed, which is presently
+ fixed at 0.5 m/s. Otherwise, a number of stuck nodes (ones with zero or very
+ low velocity) is expected during a prolonged simulation.
+"""
+
+# =============================================================================
+#
+# LICENSING
+#
+# =============================================================================
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version 3
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+# =============================================================================
+
+__AUTHOR__  = "Kristjan V. Jonsson"
+__VERSION__ = 1.0
+
+
+import sys
+import os
+import getopt
+import string
+import math
+import xml.dom.minidom
+import xml.dom.ext
+from random import SystemRandom
+
+
+ROOT_NODE_NAME = "mobility-trace"
+
+CREATE_NODE_NAME = "create"
+DESTROY_NODE_NAME = "destroy"
+WAYPOINT_NODE_NAME = "waypoint"
+
+ID_LABEL = "nodeid"
+TIME_LABEL = "time"
+TYPE_LABEL = "type"
+PREFIX_LABEL = "prefix"
+ICON_LABEL = "icon"
+SPEED_LABEL = "speed"
+LOCATION_LABEL = "location"
+DEST_LABEL = "destination"
+X_LABEL = "xpos"
+Y_LABEL = "ypos"
+MOBILITY_MODEL_LABEL = "mobilityModel"
+MOBILITY_MODEL = "TraceMobility"
+
+DEFAULT_TYPE = "SimpleNode"
+DEFAULT_PREFIX = "node"
+DEFAULT_ICON = "device/palm_s"
+
+MIN_SPEED = 0.5  # Minimum allowed speed in m/s
+
+myrand = SystemRandom();
+
+
+class Usage(Exception):
+  def __init__(self, msg):
+    self.msg = msg
+     
+     
+def createTrace( filename, nodeCount, timeLimit, max_x, max_y, speed, speed_sd, pause, pause_sd ):
+  """
+  Create a XML trace file with the given name
+  """
+  doc,root = createRootNode();
+  
+  # Create a trace for each node in the simulation
+  for i in range(1,nodeCount+1):
+    generateNodeTrace(doc,root,i,timeLimit,max_x,max_y,speed,speed_sd,pause,pause_sd)
+     
+  # Save the trace
+  saveDocument(doc,filename);
+  
+    
+def showDocument(doc):
+  """
+  Display the generated XML document on the console
+  """
+  xml.dom.ext.PrettyPrint(doc);
+  
+  
+def saveDocument(doc,filename):
+  """
+  Save the generated XML document to file
+  """
+  file_object = open(filename,"w");
+  xml.dom.ext.PrettyPrint(doc,file_object);
+  file_object.close();
+
+  
+def getInitialLocation(max_x,max_y):
+  """
+  Returns a initial location. The algorithm given by Navidi and Camp in 
+  "Stationary Distributions for the Random Waypoint Mobility Model" for
+  a stationary distribution without pausing is used.
+  """    
+  while True:
+    x1,y1 = getRandomLocation(max_x,max_y);
+    x2,y2 = getRandomLocation(max_x,max_y);
+    r = math.sqrt(pow(x1-x2,2)+pow(y1-y2,2))/math.sqrt(2);
+    u1 = myrand.random();
+    if u1<r: break;  
+    
+  return x1,y1,x2,y2;  
+    
+  
+def getRandomLocation(max_x,max_y):
+  """
+  Returns a initial location
+  """  
+  x = myrand.random()*max_x;
+  y = myrand.random()*max_y;
+  return x,y;
+    
+  
+def generateNodeTrace(doc,root,id,timeLimit,max_x,max_y,speed,speed_sd,pause,pause_sd):  
+  """
+  Generate a trace for a single node. A series of waypoint commands is created
+  using normally distributed velocity and pause times.
+  """
+    
+  # generate the create command at the initial location
+  x1,y1,x2,y2 = getInitialLocation(max_x,max_y);  
+  addCreateNode(doc,root,id,0.0,x1,y1);
+  cx=x1
+  cy=y1
+    
+  # Generate the waypoint events. Continue while the elapsed time is
+  # less than the scenario time. Note that the final leg of the journey
+  # may well be scheduled to last longer than the scenario duration.
+  # It is however cut short by the final destroy command which limits
+  # the nodes lifetime.
+  elapsed_time = 0.0;
+  wpt_count = 0;
+  while(elapsed_time < timeLimit):      
+    wpt_count+=1;
+    # Get a new random location. Use the location generated in the initialization
+    # step for the first waypoint. Thereafter, generate uniformly distributed locations
+    # within the area. 
+    if wpt_count>1:
+      wx,wy = getRandomLocation(max_x,max_y);
+    else:
+      wx,wy = x2,y2;
+    # Get the speed drawn from a normal distribution.
+    # Truncate and restrict to the minimum speed to avoid the
+    # zero speed problem
+    rspeed = myrand.normalvariate(speed-MIN_SPEED,speed_sd)
+    if (rspeed < 0.0):
+      rspeed = 0.0;
+    rspeed += MIN_SPEED;
+    # Get a pause time drawn from a truncated normal distribution.
+    rpause = myrand.normalvariate(pause,pause_sd)
+    if ( pause < 0.0 ):
+      pause = 0.0;
+    # Add the waypoint node at the currently elapsed time
+    addWaypointNode(doc,root,id,elapsed_time,wx,wy,rspeed);
+    # Update elapsed time using the travel distance, random speed 
+    # and pause times.
+    distance=math.sqrt(pow(cx-wx,2)+pow(cy-wy,2))
+    travel_time = (distance/rspeed) + rpause;
+    elapsed_time += travel_time;
+    # Keep track of the current coordinates so we can update the 
+    # elapsed time easily in the next iteration.
+    cx=wx
+    cy=wy
+    
+  # Add a destroy command at the simulation time limit
+  addDestroyNode(doc,root,id,timeLimit);
+
+  
+def createRootNode():
+  """
+  Create the root XML document node. Returns the XML document and the root element.
+  """  doc = xml.dom.minidom.Document();
+  root_element = doc.createElement(ROOT_NODE_NAME);
+  doc.appendChild(root_element);
+  return doc,root_element;
+  
+  
+def addCreateNode(doc,root,id,time,x,y,type=DEFAULT_TYPE,prefix=DEFAULT_PREFIX,icon=DEFAULT_ICON):
+  """
+  Add a create command node
+  """  
+  create_element = doc.createElement(CREATE_NODE_NAME);
+  addValueNode(doc,create_element,ID_LABEL,id);
+  addValueNode(doc,create_element,TIME_LABEL,time);
+  addValueNode(doc,create_element,TYPE_LABEL,type);
+  addValueNode(doc,create_element,PREFIX_LABEL,prefix);
+  addValueNode(doc,create_element,ICON_LABEL,icon);      
+  addValueNode(doc,create_element,MOBILITY_MODEL_LABEL,MOBILITY_MODEL);
+  addLocationNode(doc,create_element,x,y,LOCATION_LABEL);
+  root.appendChild(create_element);
+  
+  
+def addDestroyNode(doc,root,id,time):
+  """
+  Add a destroy command node
+  """
+  destroy_element = doc.createElement(DESTROY_NODE_NAME);
+  addValueNode(doc,destroy_element,ID_LABEL,id);
+  addValueNode(doc,destroy_element,TIME_LABEL,time);  
+  root.appendChild(destroy_element);
+  
+  
+def addWaypointNode(doc,root,id,time,x,y,speed):
+  """
+  Add a waypoint command node
+  """  
+  #print "waypoint",id,time,x,y,speed;
+  waypoint_element = doc.createElement(WAYPOINT_NODE_NAME);
+  addValueNode(doc,waypoint_element,ID_LABEL,id);
+  addValueNode(doc,waypoint_element,TIME_LABEL,time);
+  addLocationNode(doc,waypoint_element,x,y,DEST_LABEL);  
+  addValueNode(doc,waypoint_element,SPEED_LABEL,speed);
+  root.appendChild(waypoint_element);
+  
+  
+def addValueNode(doc,parent,label,value):
+  """
+  Add a value element to a node.
+  """
+  id_element = doc.createElement(label);
+  val_element = doc.createTextNode(str(value))
+  id_element.appendChild(val_element);
+  parent.appendChild(id_element); 
+  
+  
+def addLocationNode(doc,parent,x,y,label):
+  """
+  Add a location element to a node
+  """  
+  loc_element = doc.createElement(label);
+  addValueNode(doc,loc_element,X_LABEL,x);
+  addValueNode(doc,loc_element,Y_LABEL,y);
+  parent.appendChild(loc_element);
+  
+  
+#
+# Main method. 
+# This is the body of the program. Handles reading and processing of command line options.
+#
+def main(argv=None):
+  if argv is None:
+    argv = sys.argv
+
+    print "\n";
+    print "rwpy";
+    print "Random waypoint trace generator";
+    print "\n";
+    try:
+      try:  
+        # TODO: MORE OPTS
+        opts, args = getopt.getopt( argv[1:], "hn:t:x:y:v:s:p:d:", \
+                                    ["help","nodes=","time=","xmax=","ymax","velocity=","vel_sd=","pause=","pause_sd="])                
+      except getopt.error, msg:
+        raise Usage(msg)
+    except Usage, err:
+      print >>sys.stderr, err.msg
+      print >>sys.stderr, "for help use --help"
+      return 2
+      
+    filename=""
+    if len(args)>0:
+      filename=args[0];
+      
+    # Set the defaults
+    nodes=10;
+    time=3600;
+    max_x = 1000
+    max_y = 1000
+    speed=1.0
+    speed_sd=0.5
+    pause=10
+    pause_sd=5
+                
+    # Process the command line options
+    for o, a in opts:
+      if o in ("-h", "--help"):
+        print __doc__
+        print "\n"
+        sys.exit(0)
+      elif o in ("-n","--nodes"):
+        nodes = string.atoi(a);
+      elif o in ("-t","--time"):
+        time = string.atof(a);
+      elif o in ("-x","--xmax"):
+        max_x = string.atof(a);
+      elif o in ("-y","--xmay"):
+        max_y = string.atof(a);
+      elif o in ("-v","--velocity"):
+        speed = string.atof(a);
+      elif o in ("-s","--vel_sd"):
+        speed_sd = string.atof(a);
+      elif o in ("-p","--pause"):
+        pause = string.atof(a);
+      elif o in ("-d","--pause_sd"):
+        pause_sd = string.atof(a);
+
+    # Error if the filename is unspecified
+    if filename == "":
+      print >>sys.stderr, "No filename specified\n\n";
+      sys.exit(2);
+        
+    print "\nGenerating RWP mobility trace file\n";
+    print "    Name:        %s" % filename;
+    print "    Nodes:       %s" % nodes;
+    print "    Time:        %d" % time;
+    print "    X max:       %d" % max_x;
+    print "    Y max:       %d" % max_y;
+    print "    Velocity:    %f" % speed;
+    print "    Velocity sd: %f" % speed_sd;
+    print "    Pause:       %f" % pause;
+    print "    Pause sd:    %d" % pause_sd;
+                                               
+    # Generate the trace                                                                
+    createTrace(filename,nodes,time,max_x,max_y,speed,speed_sd,pause,pause_sd);
+      
+if __name__ == "__main__":
+  sys.exit(main())  
+
