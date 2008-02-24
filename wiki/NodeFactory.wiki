@@ -4,14 +4,7 @@ Factory module for dynamic instantiation of mobile nodes in OMNeT++ simulations 
 
 The node factory module dynamically instantiates mobile nodes in OMNeT++ simulations in accordance to descriptions given in trace files. 
 
-*A mobility trace defines create, destroy and waypoint events for a collection of nodes. Such a trace is created using an external mobility generator, e.g. UrbanMobility from the MobiTrace toolkit, or UDel (http://udelmodels.eecis.udel.edu). 
+  *A mobility trace defines create, destroy and waypoint events for a collection of nodes. Such a trace is created using an external mobility generator, e.g. UrbanMobility from the MobiTrace toolkit, or UDel (http://udelmodels.eecis.udel.edu). 
 
-*Contact traces can additionally be used. Such traces can e.g. be created from contact measurements conducted with mobile devices.
+  *Contact traces can additionally be used. Such traces can e.g. be created from contact measurements conducted with mobile devices.
 
-
-= Details =
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
