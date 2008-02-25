@@ -32,8 +32,6 @@
 #include "RandomWaypointMobility.h"
 #include <FWMath.h>
 
-//#define __RANDOM_WAYPOINT_MOBILITY_DEBUG__
-
 Define_Module(RandomWaypointMobility);
 
 
@@ -46,36 +44,21 @@ void RandomWaypointMobility::initialize(int stage)
 {
   BasicMobility::initialize(stage);
 
-  EV << "initializing RandomWaypointMobility stage " << stage << endl;
+  EV << fullPath() << ": initializing RandomWaypointMobility, stage=" << stage << endl;
 
   if (stage == 0)
   {
-    double x = 0.0;
-  	double y = 0.0;
-  	double z = 0.0;
-
-  	hasPar("x") ? x = par("x") : x = 0.0;
-  	hasPar("y") ? y = par("y") : y = 0.0;
-
-  	double velocityMean = 0.0;
-  	double velocitySd = 0.0;
-  	double pauseTimeMean = 0.0;
-  	double pauseTimeSd = 0.0;
-
-  	hasPar("velocity") ? velocityMean = par("velocity") : velocityMean = 1.0;
-  	hasPar("velocitySd") ? velocitySd = par("velocitySd") : velocitySd = 0.0;
-  	hasPar("pauseTimeMean") ? pauseTimeMean = par("pauseTimeMean") : pauseTimeMean = 0.0;
-  	hasPar("pauseTimeSd") ? pauseTimeSd = par("pauseTimeSd") : pauseTimeSd = 0.0;
-
-  	hasPar("activateTime") ? m_tActivate = par("activateTime") : m_tActivate = 0.0;
-
-  	hasPar("updateInterval") ? m_updateInterval = par("updateInterval") : m_updateInterval = 1.0;
-
-  	m_mobility = new cRandomWaypoint( x, y, velocityMean, velocitySd,
-  	                                  pauseTimeMean, pauseTimeSd,
-  	                                  (int)playgroundSizeX(), (int)playgroundSizeY() );
-  	                                  
-    move.speed=1;  // Dummy to get the base class to scedule event
+  	hasPar("velocity") ? m_fMeanVelocity = par("velocity") : m_fMeanVelocity = 1.0;
+  	hasPar("velocitySd") ? m_fSdVelocity = par("velocitySd") : m_fSdVelocity = 0.0;
+  	hasPar("pauseTimeMean") ? m_fMeanPause = par("pauseTimeMean") : m_fMeanPause = 0.0;
+  	hasPar("pauseTimeSd") ? m_fSdPause = par("pauseTimeSd") : m_fSdPause = 0.0;
+  	
+  	EV << "   velocity - mean: " << m_fMeanVelocity << endl;
+  	EV << "   velocity - sd:   " << m_fSdVelocity << endl;
+  	EV << "   pause - mean:    " << m_fMeanPause << endl;
+  	EV << "   pause - sd:      " << m_fSdPause << endl;
+  	 	
+    _initialize();
   }
   else if ( stage == 1 )
   {
@@ -85,21 +68,96 @@ void RandomWaypointMobility::initialize(int stage)
 
 void RandomWaypointMobility::makeMove()
 {
-  m_mobility->updateLocation( simTime() );
-	
+  _updateLocation();	
   move.startTime = simTime();
-  move.startPos.x = m_mobility->getX(); 
-  move.startPos.y = m_mobility->getY();
-  
-  fixIfHostGetsOutside();
+}
+void RandomWaypointMobility::_updateLocation()
+{
+  // Handle movement outside the scenario boundaries
+	if ( _checkOffMap() )
+		_pickWaypoint();
+
+  // Calculate the delta time from the last update
+	double fDeltaTime = simTime() - m_tLastUpdate;
+	m_tLastUpdate = simTime();
+
+  // Dont do anyting if we are currently pausing
+	if ( m_fNextMoveTime > simTime() )
+		return;
+
+  // Calculate the distance to move in this update
+	double updateDistance = move.speed * fDeltaTime;
+	// Calculate the distance to the waypoint from our current location
+  double waypointDistance = move.startPos.distance(targetPos);
+
+	if ( waypointDistance < updateDistance )
+	{
+	  // We have reached the waypoint. Initialize a new waypoint location.
+	  // Set the next time to move from the pause distribution.
+		_pickWaypoint();
+		m_fNextMoveTime = simTime() + truncnormal( m_fMeanPause, m_fSdPause );		
+	}
+	else
+	{
+	  // Navigate towards the waypoint
+		double percentMovement = updateDistance/waypointDistance;
+		move.startPos.x += percentMovement * ( targetPos.x - move.startPos.x );
+		move.startPos.y += percentMovement * ( targetPos.y - move.startPos.y );
+
+    // Next move time is only used when pausing at a waypoint.
+		m_fNextMoveTime = 0.0;
+	}
 }
 
-void RandomWaypointMobility::fixIfHostGetsOutside()
+bool RandomWaypointMobility::_checkOffMap()
 {
-    Coord dummy;
-    double dum;
+	return ( ( move.startPos.x < 0 || move.startPos.x > playgroundSizeX() ) ||
+	         ( move.startPos.y < 0 || move.startPos.y > playgroundSizeY() ) );
+}
 
-    handleIfOutside( RAISEERROR, targetPos, dummy, dummy, dum );
+/**
+ * Use the guidelines from paper by Navidi and Camp from 2003 to initialize initial
+ * location to the steady state distribution.
+ * The zero problem with the velocity distribution is also addressed using 
+ * a truncated normal distribution with a minimum speed limit.
+ * Note: The initial paused state distribution suggested by Navidi and Camp
+ * is not presently implemented.
+ */
+void RandomWaypointMobility::_initialize()
+{
+	double u1,r;
+	double x1,y1,x2,y2;
+  do
+  {
+		x1 = uniform( 0.0, playgroundSizeX() );
+		y1 = uniform( 0.0, playgroundSizeY() );
+    x2 = uniform( 0.0, playgroundSizeX() );
+  	y2 = uniform( 0.0, playgroundSizeY() );
+       
+    r = sqrt(pow(x1-x2,2)+pow(y1-y2,2))/sqrt(2.0);
+    u1 = uniform( 0.0, 1.0 );
+  }
+  while ( u1 >= r );
+
+  double u2 = uniform( 0.0, 1.0 );
+  
+  move.startPos.x = u2*x1 + (1-u2)*x2;
+  move.startPos.y = u2*y1 + (1-u2)*y2;
+  
+  targetPos.x = x2;
+  targetPos.y = y2;
+  
+  // A truncated normal distribution with a minimum is used to prevent the problems
+  // with RWP noted when the distribution used for velocity includes zero.
+	move.speed = MIN_VELOCITY + truncnormal( ( m_fMeanVelocity - MIN_VELOCITY ), m_fSdVelocity );    
+}
+
+void RandomWaypointMobility::_pickWaypoint()
+{
+	targetPos.x = uniform( 0.0, playgroundSizeX() );
+	targetPos.y = uniform( 0.0, playgroundSizeY() );
+
+	move.speed = normal( m_fMeanVelocity, m_fSdVelocity );
 }
 
 

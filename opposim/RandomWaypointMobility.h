@@ -44,7 +44,9 @@
 
 #include <omnetpp.h>
 #include <BasicMobility.h>
-#include "RandomWaypoint.h"
+
+// The minimum velocity of the normal distribution
+#define MIN_VELOCITY  0.5
 
 /**
  * @brief Random waypoint mobility module.
@@ -79,18 +81,24 @@
  */
 class  RandomWaypointMobility : public BasicMobility
 {
-  protected:
-    // The update interval in seconds   
-		double m_updateInterval;
-		// The activation time in scenario ticks
-		simtime_t m_tActivate;
-
-    /** Random waypoint implementation */
- 		cRandomWaypoint *m_mobility;
-    
-    /** @brief Target position of the host */
+  protected:        
+    /** @brief Target position of the host - the next waypoint*/
     Coord targetPos;
+    
+    /** The mean velocity used for the simulation */
+		double m_fMeanVelocity;
+		/** The standard deviation for the velocity distribution */
+		double m_fSdVelocity;
+		/** The mean pause time */
+		double m_fMeanPause;
+		/** The standard deviation of the pause time distribution */
+		double m_fSdPause;
 
+    /** The next move time. Used to pause nodes when they reach a waypoint. */
+		simtime_t m_fNextMoveTime; 
+		/** Last update time. Used to calculate the distance to interpolate between waypoints. */
+		simtime_t m_tLastUpdate; 
+		
   public:
     Module_Class_Members( RandomWaypointMobility, BasicMobility, 0 );
 
@@ -100,8 +108,15 @@ class  RandomWaypointMobility : public BasicMobility
   protected:
     /** @brief Move the host */
     virtual void makeMove();
-    /** @brief Handle the simulation boundaries */
-    virtual void fixIfHostGetsOutside();
+    
+  protected:
+    /** @brief update the node location given a update interval */
+		void _updateLocation();
+		/** @brief check if the node is outside the allowed boundaries */
+		bool _checkOffMap();
+		
+		void _initialize();
+		void _pickWaypoint();
 };
 
 #endif /* __RANDOM_WAYPOINT_MOBILITY_INCLUDED__ */

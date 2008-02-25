@@ -28,7 +28,6 @@
 #define __NODE_FACTORY_ITEM_INCLUDED__
 
 #include <omnetpp.h>
-#include "CoordinateVector.h"
 
 /**
  * @brief Data structure to hold a single dynamically created node in the simulation
