@@ -1,0 +1,356 @@
+#!/usr/bin/env python
+
+"""
+mobgen 1.0
+
+Author: Kristjan V. Jonsson (kristjanvj@gmail.com)
+        (c) Kristjan V. Jonsson (2007)
+        
+Part of the MobiTrace toolbox of the OppoNet project. OppoNet is a open-source
+effort to create software and modules for support of modeling of opportunistic
+wireless systems in OMNeT++. Project hompage: http://www.ee.kth.se/lcn/opponet.
+
+mobgen generates a XML mobility trace file from a simple text based description.
+
+Usage:
+  mobgen [options] {input file} {output file}
+    options:
+    -h|--help:    Display help text.
+    -f|--force:   Force overwriting of an existing output file.
+    
+  Example:
+    mobgen -f textfile outfile.xml
+"""
+
+# =============================================================================
+#
+# LICENSING
+#
+# =============================================================================
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version 3
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+# =============================================================================
+
+__AUTHOR__  = "Kristjan V. Jonsson"
+__VERSION__ = 1.0
+
+import sys
+import os
+import getopt
+import math;
+import string
+from tracexml import *
+from tracesupport import *
+
+class processInfo:
+  def __init__(self,curTime,curx,cury):
+    self.curTime = curTime;
+    self.curx = curx;
+    self.cury = cury;
+   
+   
+class lineInfo:
+  def __init__(self,command,srcline,lineno,symbols):
+    self.command = command;
+    self.srcline = srcline;
+    self.lineno = lineno;
+    self.symbols = symbols;   
+   
+  
+curProcessInfo = {};
+
+def parseFile(in_file,out_file):
+  """
+  Parse an input file and generate XML representation.  
+  """
+  
+  linecount=0;
+  
+  curProcessTime = {};
+  
+  commands = {}
+  
+  
+  try:
+    infile=open(in_file,"r");
+    doc,root = createRootNode();
+    
+    line = "";
+    lineraw = "";
+    for lineraw in infile:
+      linecount+=1;
+      
+      # Slice away comments
+      lineraw = lineraw.strip("\n");
+      line = lineraw;
+      p=line.find("#");
+      if p != -1: 
+        line = lineraw[0:p];
+
+      # Strip away whitespace
+      line = line.strip();
+
+      # Skip any empty lines after stripping and comment slicing
+      if len(line)==0: continue;
+      
+      # Split on a space. Commands are converted to lowercase to ensure
+      # case insensitivity in parsing.
+      symbols = line.split();
+      if len(symbols) < 3:
+        error("Insufficient arguments",line,linecount); 
+        continue;
+#        raise Usage("%s (%d)" % (command,linecount));   # TODO: HANDLE BETTER     
+      command = symbols[0];
+      command = command.lower();
+      try:
+        id = string.atoi(symbols[2]);
+      except ValueError, err:
+        raise Usage(err);
+      
+      info = lineInfo(command,line,linecount,symbols);
+      if command == "create":
+        commands[id] = [];
+      if commands.has_key(id):
+        commands[id].append(info);
+      else:  
+        error("Invalid create command for node. Cannot add further commands.",line,linecount); 
+        continue;
+
+  finally:
+    infile.close();
+  
+  for key in commands:
+    node_commands = commands[key];
+    for i in range(0,len(node_commands)):
+      curCommandInfo = node_commands[i];
+      if i < len(node_commands)-1:
+        nextCommandInfo = node_commands[i+1];
+      else:
+        nextCommand = None;
+      command_kind = curCommandInfo.command;
+ 
+      try:
+        if command_kind=="create":
+          handleCreateCommand(doc,root,curCommandInfo.symbols);
+        elif command_kind=="destroy":
+          handleDestroyCommand(doc,root,curCommandInfo.symbols);
+        elif command_kind=="waypoint":
+          handleWaypointCommand(doc,root,curCommandInfo.symbols,nextCommandInfo.symbols);
+      except Usage,err:
+        error(err.message,curCommandInfo.srcline,curCommandInfo.lineno);
+        return;      
+                      
+    saveDocument(doc,out_file);   
+    
+  
+def handleCreateCommand(doc,root,symbols):
+  """
+  Handler for a create command.
+  Takes as input the xml document, tree root and the symbols parsed from 
+  the line read from the file.
+  """
+  if len(symbols) < 5:
+    raise Usage("create: Insufficient parameters");  
+  try:
+    time = string.atof(symbols[1]);
+    id = string.atoi(symbols[2]);
+    x = string.atof(symbols[3]);
+    y = string.atof(symbols[4]);
+  except ValueError, err:
+    raise Usage(err);
+    
+  # Type is empty by default. If used, this parameter must contain a string
+  # corresponding to an existing OMNeT++ module for a mobile node.  
+  type = "";
+  if len(symbols) > 5:
+    type = symbols[5];
+    
+  # Add the XML node for the create event. Save the current process time
+  # if needed for future events.
+  addCreateNode(doc,root,id,time,x,y,type);
+  p=processInfo(time,x,y);
+  curProcessInfo[id] = p;
+    
+    
+def handleDestroyCommand(doc,root,symbols):
+  """
+  Handler for a destroy command.
+  Takes as input the xml document, tree root and the symbols parsed from 
+  the line read from the file.
+  """
+  if len(symbols) < 3:
+    raise Usage("destroy: Insufficient parameters"); 
+  try:
+    time = string.atof(symbols[1]);
+    id = string.atoi(symbols[2]);
+  except ValueError, err:
+    raise Usage(err);
+ 
+  # Use the current elapsed process time for the node if negative.   
+  if time < 0:
+    if curProcessInfo.has_key(id):
+      time = curProcessInfo[id].curTime;   
+    else:
+      raise Usage("Unable to retrieve current process time to generate an destroy node");
+  # Add a XML destroy node
+  addDestroyNode(doc,root,id,time);
+
+  
+def handleWaypointCommand(doc,root,curCommand,nextCommand):
+  """
+  Handler for a waypoint command.
+  Takes as input the xml document, tree root and the symbols parsed from 
+  the line read from the file.
+  """
+
+  # set the default values
+  pause = 0;
+  speed = 0;
+  time = 0;
+  nextTime = 0;
+  
+  if len(curCommand) < 5:
+    raise Usage("waypoint: Insufficient parameters");
+  try:
+    time = string.atof(curCommand[1]);
+    if nextCommand != None:
+      nextTime = string.atof(nextCommand[1]);
+    id = string.atoi(curCommand[2]);
+    x = string.atof(curCommand[3]);
+    y = string.atof(curCommand[4]);
+    if len(curCommand) >= 6:
+      speed = string.atof(curCommand[5]);
+    if len(curCommand) >= 7:
+      pause = string.atof(curCommand[6]);
+  except ValueError, err:
+    raise Usage(err);
+    
+  # Use the current process time if negative time is given. The time here
+  # is the activation time of the waypoint command so it is the last leg 
+  # journey time plus any pausing.
+  if curProcessInfo.has_key(id):
+    p = curProcessInfo[id];   
+  else:
+    raise Usage("Unable to retrieve current process info to generate a waypoint node");
+  
+  # Calculate the travel distance which is the distance between the current 
+  # location and the one specified in the waypoint.
+  distance = math.sqrt(pow(p.curx-x,2)+pow(p.cury-y,2));
+  
+  if time < 0:
+    # Time is less than zero, i.e. unspecified.
+    # The activation time must be the cumulative running time of the previous commands.
+    time = p.curTime;
+    # Calculate speed from the next waypoint. Raise error if the next
+    # waypoint time is unspecified. Also applies if this is the last command.
+    if speed <= 0:
+      if nextTime > time:
+        speed = distance/(nextTime-p.curTime);    
+      else:
+        raise Usage("Invalid speed and activation time");    
+    # Update the current journey time after this leg ends.
+    p.curTime += distance/speed + pause;
+  else:
+    # The current activation time is specified.
+    if nextTime > time+pause:
+      # The speed is governed by the next command time if set. Note that this overrides
+      # the current speed setting. 
+      speed = distance/(nextTime-time-pause);
+    else:
+      raise Usage("Next activation time is less than the current activation time and pause");
+
+  # Add a XML waypoint node at the current time and location. Speed must be greater or equal to zero.
+  addWaypointNode(doc,root,id,time,x,y,speed);
+
+  # Update the current location         
+  p.curx=x;
+  p.cury=y;
+  # Update the current travel time
+  if speed < 0:
+    raise Usage("Invalid command time and speed");
+  else:
+    p.curTime += distance/speed + pause;          
+    
+    
+def error(msg,srcline,lineno):
+  """
+  Format and output an error message
+  """
+  print >>sys.stderr, "ERROR in line %d: '%s'.\n    Source line: '%s'" % (lineno,msg,srcline);
+    
+#
+# Main method. 
+# This is the body of the program. Handles reading and processing of command line options.
+#
+def main(argv=None):
+  if argv is None:
+    argv = sys.argv
+
+    print "\n";
+    print "mobgen";
+    print "\n";
+    try:
+      try:  
+        opts, args = getopt.getopt( argv[1:], "hf", ["help","force"])                
+      except getopt.error, msg:
+        raise Usage(msg)
+    except Usage, err:
+      print >>sys.stderr, err.msg
+      print >>sys.stderr, "for help use --help"
+      return 2
+            
+    force=False;
+    # Process the command line options
+    for o, a in opts:
+      if o in ("-h", "--help"):
+        print __doc__
+        print "\n"
+        sys.exit(0)
+      if o in ("-f", "--force"):
+        force=True;
+
+    if len(args) < 2:
+      print >>sys.stderr, "Input and output files not properly specified. Please see help for usage.\n\n";
+      sys.exit(2);     
+    in_file=args[0];
+    out_file=args[1];
+
+    # Error if the filenames are unspecified
+    if in_file == "":
+      print >>sys.stderr, "Input file unspecified specified\n\n";
+      sys.exit(2);
+    if in_file == "":
+      print >>sys.stderr, "No filename specified\n\n";
+      sys.exit(2);
+
+    if not os.path.exists(in_file):
+      print >>sys.stderr, "Input file '%s' does not exist.\n\n" % in_file;
+      sys.exit(2);
+    if os.path.exists(out_file) and not force:
+      print >>sys.stderr, "Output file '%s' exist. Use --force to overwrite.\n\n" % out_file;
+      sys.exit(2);
+        
+    print "\nGenerating XML trace file\n";
+    print "    source file: %s" % in_file;
+    print "    output file: %s" % out_file;
+    if force: print "      (force replace)";
+    print "\n";
+    
+    parseFile(in_file,out_file);
+                                               
+      
+if __name__ == "__main__":
+  sys.exit(main())  
+
