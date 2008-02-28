@@ -7,3 +7,69 @@ The node factory module dynamically instantiates mobile nodes in OMNeT++ simulat
   *  A mobility trace defines create, destroy and waypoint events for a collection of nodes. Such a trace is created using an external mobility generator, e.g. UrbanMobility from the MobiTrace toolkit, or UDel (http://udelmodels.eecis.udel.edu). 
 
   *  Contact traces can additionally be used. Such traces can e.g. be created from contact measurements conducted with mobile devices.
+
+= Mobility trace format =
+
+Mobility traces are in XML format and are of the following form:
+
+{{{
+<mobility-trace>
+  <create>
+    <time>0.0</time>
+    <nodeid>1</nodeid>
+    <type>SimpleNode</type>
+    <name>mobile node 1</name>
+    <icon>device/palm_s</icon>
+    <mobilityModel>TraceMobility</mobilityModel>
+    <location>
+      <xpos>0.0</xpos>
+      <ypos>0.0</ypos>
+    </location>
+  </create>
+  <destroy>
+    <time>60.0</time>
+    <nodeid>1</nodeid>
+  </destroy>
+  <waypoint>
+    <nodeid>1</nodeid>
+    <time>10.0</time>
+    <destination>
+      <xpos>10.0</xpos>
+      <ypos>10.0</ypos>
+    </destination>
+    <speed>2.0</speed>
+  </waypoint>
+</mobility-trace>
+}}}
+
+A single node of type SimpleNode is created at t = 0.0 at (x, y) = (0.0, 0.0) and starts moving towards (x, y) = (10.0, 10.0) at t = 10.0 s with v = 2.0 m/s. It then remains stationary at the ﬁnal destination until it is destroyed at t = 60.0 s.
+
+
+= Contact trace format =
+
+{{{
+<contact-trace>
+  <create>
+    <time>0.0</time>
+    <nodeid>1</nodeid>
+    <type>SimpleNode</type>
+  </create>
+  <create>
+    <time>0.0</time>
+    <nodeid>2</nodeid>
+    <type>SimpleNode</type>
+  </create>
+  <contact>
+    <time>5.0</time>
+    <nodeid>1</nodeid>
+    <peerid>2</peerid>
+  </contact>
+  <break>
+    <time>10.0</time>
+    <nodeid>1</nodeid>
+    <peerid>2</peerid>
+  </break>
+</contact-trace>
+}}}
+
+Two nodes, Node 1 and Node 2, are created at startup in this example. Node 1 discovers its peer Node 2 at t = 5.0 s. The contact is brokenat t = 10.0 s.
