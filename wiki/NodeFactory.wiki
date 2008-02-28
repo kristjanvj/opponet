@@ -109,4 +109,4 @@ Contact traces are in *XML* format and are of the following form:
 </contact-trace>
 }}}
 
-Two nodes, Node 1 and Node 2, are created at startup in this example. Node 1 discovers its peer Node 2 at t = 5.0 s. The contact is brokenat t = 10.0 s.
+Two nodes, Node 1 and Node 2, are created at startup in this example. Node 1 discovers its peer Node 2 at t = 5.0 s. The contact is broken at t = 10.0 s.
