@@ -15,7 +15,7 @@ waypoint events, providing an arbitrarily ﬁne-grained con-
 trol over the lifetime and mobility of a population of nodes.
 A mobility trace can be created by mobility generators or constructed from measurements, e.g. tracking the movement of a population of nodes equipped with GPS locators.
 
-*  _Create_ events specify the arrival of a node with a given
+  *  _Create_ events specify the arrival of a node with a given
 id into the scenario at a given time and location. A node
 type designation enables nodes of various types and capa-
 bilities to be instantiated. A simulation could e.g. include
@@ -34,7 +34,7 @@ for nodes with other mobility models, e.g. random waypoint
 (RWP), take eﬀect at create time and must be speciﬁed in
 the initialization ﬁle for the scenario.
 
-*  _Waypoint_ events specify a waypoint change, i.e. the next
+  *  _Waypoint_ events specify a waypoint change, i.e. the next
 destination on a nodes journey. The waypoint event spec-
 iﬁes a node id and activation time. A node moves with a
 ﬁxed speed on the leg between the current and destination
@@ -45,7 +45,7 @@ point events are only required when nodes change direction
 or velocity. Relatively compact traceﬁles are thus feasible,
 even with a large number of generated nodes.
    
-*  _Destroy_ events specify the departure of a node with a
+  *  _Destroy_ events specify the departure of a node with a
 given id from the scenario at a given time. The node is
 destroyed regardless of any remaining waypoint events.
 
@@ -100,10 +100,10 @@ in general, be assumed to have any associated location data.
 A contact trace consists of sequences of contact and break
 events:
 
-*  _Contact_ events signify a discovery event by a node, spec-
+  *  _Contact_ events signify a discovery event by a node, spec-
 iﬁed by a nodeid, of a peer with id peerid at a given time.
    
-*  _Break_ events signify a broken or lost contact between a
+  *  _Break_ events signify a broken or lost contact between a
 node, speciﬁed by a nodeid, and a peer with id peerid at a
 given time.
 
