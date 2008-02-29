@@ -1,0 +1,7 @@
+Simple mobile node OMNeT++ compound module
+
+= Introduction =
+
+SimpleNode is used in the Opposim simulation demo to represent a mobile node. It is instantiated dynamically during a simulation by the NodeFactory module in accordance to events specified in a XML [TraceFileFormat trace file].
+
+The SimpleNode module contains a !Blackboard module for communicating mobility updates to other modules within the node. See the [MobilityFramework Mobility Framework] documentation for details regarding to subscribing to updates through the !Blackboard.
