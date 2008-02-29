@@ -12,6 +12,22 @@ A scripting approach to this simple mobility model is thus
 not strictly necessary. Like UrbanMobility, rwpy generates
 a XML [TraceFileFormat traceﬁle] of create, destroy and waypoint events.
 
+== Usage ==
+
+Please refer to the general notes on the MobiTrace toolbox page. The script takes the following parameters:
+
+  rwpy {options} [filename]
+    where options are:
+       -h|--help      Display help text
+       -n|--nodes     Number of generated nodes (default 10)
+       -t|--time      Scenario time (default 3600 sec)
+       -x|--xmax      Scenario width (default 1000 m)
+       -y|--ymax      Scenario height (default 1000 m)
+       -v|--velocity  Mean velocity (m/s)
+       -s|--vel_sd    Standard deviation of the velocity 
+       -p|--pause     Mean pause time (sec)
+       -d|--pause_sd  Standard deviation of the pause times
+
 = The random waypoint mobility model =
 
 Random waypoint is a simple mobility model, but nevertheless one which has been widely used in mobility research. It works as follows:
