@@ -34,7 +34,7 @@ The NodeFactory component is the only component instantiated at startup, apart f
 
 == Mobility trace demonstration ==
 
-The mobility trace simulation instantiates nodes of the type SimpleNode, which are very basic OMNeT++ compound module, containing only a generic Navigator module and a Blackboard. The generic navigator can be assigned the class names of any !BasicMobility-derived mobility module at startup, either in the simulation ini file or the XML trace file as done in this case.
+The mobility trace simulation instantiates nodes of the type SimpleNode, which is a very basic OMNeT++ compound module, containing only a generic Navigator module and a Blackboard. The generic navigator can be assigned the class names of any !BasicMobility-derived mobility module at startup, either in the simulation ini file or the XML trace file as done in this case.
 
 The demo simulation, defined in trace.ini, spawns three nodes during the simulation lifetime. Two use a trace mobility model where each waypoint is explicitly scripted in the XML file. The third uses a random waypoint mobility model and demonstrates how mobility models may be mixed within the simulation.
 
