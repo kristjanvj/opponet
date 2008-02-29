@@ -13,7 +13,7 @@ Unpack the release of opposim into a subdirectory of the users home directory. T
   *  enter *./mkgui* for creating a makefile for a GUI version
   *  enter *./mkcmd* for creating a makefile for a console version
 
-type *make* to build the executable, which will be named *opposim*.
+Type *make* to build the executable, which will be named *opposim*.
 
 = Running opposim =
 
@@ -23,3 +23,13 @@ Two ini files are provided to run the opposim simulation:
   *  contact.ini specifies a contact trace XML file to be loaded into the node factory on startup. Enter *./opposim -f contact.ini* to run.
 
 The common settings are in both cases to be found in the standard omnetpp.ini intialisation file.
+
+= The elements of a Opposim simulation =
+
+NodeFactory
+
+TraceMobility
+
+ContactNotifier
+
+ContactSubscriber
