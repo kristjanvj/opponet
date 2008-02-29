@@ -6,4 +6,20 @@ Opposim is a very simple demonstration for the [OMNETPP OMNeT++] compontents of 
 
 = Building opposim =
 
-Download, install and build the latest [OMNETPP OMNeT++] and [MobilityFramework Mobility Framework] releases. See the installation and build instructions for the projects for further details.
+Download, install and build the latest [OMNETPP OMNeT++] and [MobilityFramework Mobility Framework] releases. See the installation and build instructions for the projects for further details. Opposim was developed on a Linux platform. Both OMNeT++ and MF are available for Windows platforms so porting to that platform should prove to be straight forward. We assume that OMNeT++ and MF are built and installed in a subdirectory of the users home directory.
+
+Unpack the release of opposim into a subdirectory of the users home directory. The release contains only sources and some test files so we have to start by building an executable. Two bash scripts are provided to create GUI or console versions. cd to your opposim directory and
+
+  *  enter *./mkgui* for creating a makefile for a GUI version
+  *  enter *./mkcmd* for creating a makefile for a console version
+
+type *make* to build the executable, which will be named *opposim*.
+
+= Running opposim =
+
+Two ini files are provided to run the opposim simulation:
+
+  *  trace.ini specifies a mobility trace XML file to be loaded into the node factory on startup. Enter *./opposim -f trace.ini* to run.
+  *  contact.ini specifies a contact trace XML file to be loaded into the node factory on startup. Enter *./opposim -f contact.ini* to run.
+
+The common settings are in both cases to be found in the standard omnetpp.ini intialisation file.
