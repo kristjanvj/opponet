@@ -22,7 +22,7 @@ Random waypoint is a simple mobility model, but nevertheless one which has been 
 This process is repeated for the duration of the simulation.
 
 The accuracy of the random waypoint model has recently been called into 
-question in a number of articles, e.g. [[1]].
+question in a number of articles, e.g. <ref name="navidi2004">Navidi and Camp, Stationary Distributions for the Random Waypoint Mobility Model</ref>
 Navidi and Camp p provide a number of guidelines [[1]] for initializing the nodes to
 increase the accuracy of the simulation. This implemenation follows the 
 guidelines set forth by Navidi and Camp to initialize initial location of
@@ -34,6 +34,3 @@ The velocity and pause times in rwpy are drawn from a truncated normal distribut
 The zero speed problem is addressed using a minimum speed, which is presently
 fixed at 0.5 m/s. Otherwise, a number of stuck nodes (ones with zero or very
 low velocity) is expected during a prolonged simulation.
-
-
-[[1]] Navidi and Camp.
