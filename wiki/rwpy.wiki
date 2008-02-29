@@ -1,0 +1,13 @@
+Simple generator for tracefiles using the random waypoint mobility model
+
+= Introduction =
+
+rwpy is a simple implementation of the Random Waypoint
+mobility model (RWP), which generates mobility traces for
+a ﬁxed number _n_ of nodes, given a running time _tr_ . This ap-
+plication is essentially a proof-of-concept, as RWP mobility
+can easily be implemented in a MF-derived mobility module.
+One such module, RandomWaypointMobility, is actually provided with the opposim demonstration
+A scripting approach to this simple mobility model is thus
+not strictly necessary. Like UrbanMobility, rwpy generates
+a XML [TraceFileFormat traceﬁle] of create, destroy and waypoint events.
