@@ -11,3 +11,31 @@ One such module, RandomWaypointMobility, is actually provided with the opposim d
 A scripting approach to this simple mobility model is thus
 not strictly necessary. Like UrbanMobility, rwpy generates
 a XML [TraceFileFormat traceﬁle] of create, destroy and waypoint events.
+
+= The random waypoint mobility model =
+
+Random waypoint is a simple mobility model, but nevertheless one which has been widely used in mobility research. It works as follows:
+  #  A node is initialized at a uniformly distributed location within a fixed boundary.
+  #  The node picks a new waypoint after an optional pause, which is also
+     selected from a random distribution.
+  #  The node navigates towards this point, interpolating a new position at 
+     each discrete update.
+  #  Upon arriving a the new location, the node selects a new waypoint, optionally
+     waiting before starting its journey towards the new location.
+This process is repeated for the duration of the simulation.
+
+The accuracy of the random waypoint model has recently been called into 
+question in a number of articles, among others one by Navidi and Camp from 2003.
+They however provide a number of guidelines for initializing the nodes to
+increase the accuracy of the simulation. This implemenation follows the 
+guidelines set forth by Navidi and Camp to initialize initial location of
+the nodes to be consistent with the expected steady state distribution.
+Note: The initial paused state distribution suggested by Navidi and Camp
+is not presently implemented.
+
+
+The velocity and pause times are drawn from a truncated normal distribution.
+
+The zero speed problem is addressed using a minimum speed, which is presently
+fixed at 0.5 m/s. Otherwise, a number of stuck nodes (ones with zero or very
+low velocity) is expected during a prolonged simulation.
