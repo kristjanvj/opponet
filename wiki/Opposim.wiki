@@ -1,0 +1,9 @@
+A simple demonstration simulator for the Opponet project
+
+= Introduction =
+
+Opposim is a very simple demonstration for the [OMNETPP OMNeT++] compontents of the Opposim project. The simulation involves only mobility or contact functionality - expanding the simulation to do something useful is completely up to the users.
+
+= Building opposim =
+
+Download, install and build the latest [OMNETPP OMNeT++] and [MobilityFramework Mobility Framework] releases. See the installation and build instructions for the projects for further details.
