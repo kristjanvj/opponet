@@ -30,8 +30,7 @@ the nodes to be consistent with the expected steady state distribution.
 Note: The initial paused state distribution suggested by Navidi and Camp
 is not presently implemented.
 
-The velocity and pause times are drawn from a truncated normal distribution.
-
+The velocity and pause times in rwpy are drawn from a truncated normal distribution.
 The zero speed problem is addressed using a minimum speed, which is presently
 fixed at 0.5 m/s. Otherwise, a number of stuck nodes (ones with zero or very
 low velocity) is expected during a prolonged simulation.
