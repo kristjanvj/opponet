@@ -5,9 +5,9 @@ Utilities for generating and converting mobility and contact traces.
 The MobiTrace toolbox is a collection of scripts and simple utilities for trace driven mobility support. The following utilities are provided:
 
   *  *UrbanMobility*
-  *  *rwpy*
-  *  *u2tr*
-  *  *mobgen*
+  *  *[rwpy]*
+  *  *[u2tr]*
+  *  *[mobgen]*
 
 = Installation and usage =
 
