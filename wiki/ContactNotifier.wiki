@@ -1,0 +1,10 @@
+Contact notifier for trace based mobility simulations in OMNeT++ simulations.
+
+= Introduction =
+
+The _ContactNotifier_ manages the contact events of a node when performing contact-driven simulations. The events are speciﬁed in a traceﬁle, as described in [TraceFile Tracefile format].
+
+There is no actual mobility of nodes at the simulation level when employing the contact-driven approach. The contact trace simply lists the contact events, which may
+be a consequence of node mobility. Therefore, nodes in a contact-driven simulation do not have a mobility module, but instead employ the _ContactNotifier_ to publish contact events to subscribing modules of the the node through the _Blackboard_. Although not a mobility module as such, the _ContactNotifier_ serves a comparable purpose of notifying submodules of status change, and is indeed derived from the _BasicMobility_ class of the MF. _ContactNotifier_ can thus be viewed as replacing the _TraceMobility_ module in the navigator role when using the contact driven approach to opportunistic networking simulation.
+
+
