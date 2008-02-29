@@ -22,15 +22,15 @@ Random waypoint is a simple mobility model, but nevertheless one which has been 
 This process is repeated for the duration of the simulation.
 
 The accuracy of the random waypoint model has recently been called into 
-question in a number of articles, e.g. [[1]].
-Navidi and Camp p provide a number of guidelines [[1]] for initializing the nodes to
-increase the accuracy of the simulation. This implemenation follows the 
-guidelines set forth by Navidi and Camp to initialize initial location of
-the nodes to be consistent with the expected steady state distribution.
-Note: The initial paused state distribution suggested by Navidi and Camp
+question in a number of articles, e.g. [NAV04]. It is nevertheless a de-facto reference mobility model and well worth exploring for some applications
+Navidi and Camp provide a number of guidelines [NAV04] for initializing the nodes to
+be consistent with the expected steady state distribution, which increases the accuracy of the simulation. This implemenation follows those 
+guidelines, although the initial paused state distribution suggested by Navidi and Camp
 is not presently implemented.
 
 The velocity and pause times in rwpy are drawn from a truncated normal distribution.
 The zero speed problem is addressed using a minimum speed, which is presently
 fixed at 0.5 m/s. Otherwise, a number of stuck nodes (ones with zero or very
 low velocity) is expected during a prolonged simulation.
+
+*NAV04* Navidi, W. & Camp, T. Stationary Distributions for the Random Waypoint Mobility Model. IEEE Transactions on Mobile Computing, 2004, 3, pp. 99-108
