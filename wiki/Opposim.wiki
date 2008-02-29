@@ -33,3 +33,11 @@ TraceMobility
 ContactNotifier
 
 ContactSubscriber
+
+= The demonstration scenarios =
+
+== Mobility trace demonstration ==
+
+The mobility trace demonstration contains a single [NodeFactory node factory] object which is initialized at startup using the specified XML mobility file. It spawns three nodes during the simulation lifetime. Two use a trace mobility model where each waypoint is explicitly scripted in the XML file. The third uses a random waypoint mobility model and demonstrates how mobility models may be mixed within the simulation.
+
+== Contact trace demonstration ==
