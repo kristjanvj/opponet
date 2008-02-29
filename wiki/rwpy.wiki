@@ -22,7 +22,7 @@ Random waypoint is a simple mobility model, but nevertheless one which has been 
 This process is repeated for the duration of the simulation.
 
 The accuracy of the random waypoint model has recently been called into 
-question in a number of articles, e.g. <ref name="navidi2004">Navidi and Camp, Stationary Distributions for the Random Waypoint Mobility Model</ref>
+question in a number of articles, e.g. [[1]].
 Navidi and Camp p provide a number of guidelines [[1]] for initializing the nodes to
 increase the accuracy of the simulation. This implemenation follows the 
 guidelines set forth by Navidi and Camp to initialize initial location of
