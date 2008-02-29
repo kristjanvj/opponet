@@ -22,7 +22,7 @@ Random waypoint is a simple mobility model, but nevertheless one which has been 
 This process is repeated for the duration of the simulation.
 
 The accuracy of the random waypoint model has recently been called into 
-question in a number of articles, e.g. [![NAV04]]. It is nevertheless a de-facto reference mobility model and well worth exploring for some applications
+question in a number of articles, e.g. ![[NAV04]]. It is nevertheless a de-facto reference mobility model and well worth exploring for some applications
 Navidi and Camp provide a number of guidelines [![NAV04]] for initializing the nodes to
 be consistent with the expected steady state distribution, which increases the accuracy of the simulation. This implemenation follows those guidelines, although the initial paused state distribution suggested is not presently implemented.
 
