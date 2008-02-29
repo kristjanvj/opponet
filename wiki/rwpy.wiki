@@ -32,5 +32,7 @@ fixed at 0.5 m/s. Otherwise, a number of stuck nodes (ones with zero or very
 low velocity) is expected during a prolonged simulation.
 
 *NAV04* Navidi, W. & Camp, T. Stationary Distributions for the Random Waypoint Mobility Model. IEEE Transactions on Mobile Computing, 2004, 3, pp. 99-108
+
 *BET03* Bettstetter, C.; Resta, G. & Santi, P. The Node Distribution of the Random Waypoint Mobility Model for Wireless Ad Hoc Networks. IEEE Transactions on Mobile Computing, 2003, 2, pp. 257-269
+
 *YOO03* Yoon, J.; Liu, M. & Noble, B. Random Waypoint Considered Harmful. Proceedings of INFOCOM. IEEE, 2003
