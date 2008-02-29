@@ -1,3 +1,5 @@
+Description of trace file formats used in the opponet project.
+
 = Mobility trace format =
 
 A mobility trace includes a series of node create, destroy and
