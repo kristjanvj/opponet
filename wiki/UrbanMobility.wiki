@@ -2,7 +2,8 @@ Simple mobility generator for street scenarios
 
 = Introduction =
 
-The *UrbanMobility* tool generates mobility patterns of nodes
+The *UrbanMobility* tool is a part of the MobiTrace toolbox for opponet. 
+It generates mobility patterns of nodes
 (pedestrians, vehicles etc.) in an urban area. It takes as in-
 put a map, routing probabilities and a set of generators. The
 map speciﬁes a grid of streets and intersections in the form
@@ -16,4 +17,4 @@ ability each street at the intersection is next selected by the
 node. Intersections can also have exits where
 nodes can leave the area (for underground transportation,
 area boundary etc.). The UrbanMobility tool generates a
-mobility trace in XML format as described in NodeFactory.
+[TraceFileFormat mobility trace] in XML format.
