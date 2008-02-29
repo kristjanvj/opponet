@@ -16,7 +16,7 @@ a XML [TraceFileFormat traceﬁle] of create, destroy and waypoint events.
 
 Please refer to the general notes on the MobiTrace toolbox page. The script takes the following parameters:
 
-  rwpy {options} [![filename]]
+  rwpy {options} ![[filename]]
     where options are:
        -h|--help      Display help text
        -n|--nodes     Number of generated nodes (default 10)
