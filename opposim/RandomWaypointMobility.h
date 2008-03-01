@@ -75,8 +75,6 @@
  * fixed at 0.5 m/s. Otherwise, a number of stuck nodes (ones with zero or very
  * low velocity) is expected during a prolonged simulation.
  *
- * This class wraps the cRandomWaypoint class for use in an OMNeT++ simulation. 
- * 
  * @author Kristjan V. Jonsson
  */
 class  RandomWaypointMobility : public BasicMobility
