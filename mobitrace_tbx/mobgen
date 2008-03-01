@@ -329,7 +329,6 @@ def main(argv=None):
     force=False;
     random=False;
     # Process the command line options
-    print opts;
     for o, a in opts:
       if o in ("-h", "--help"):
         print __doc__
