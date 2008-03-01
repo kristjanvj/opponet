@@ -71,6 +71,6 @@ Example:
 
 = Implementation =
 
-We omit all datapoints with FloorNum==100000 or 100001 as these nodes are outside or about to depart the scenario.
+We omit all datapoints with !FloorNum==100000 or 100001 as these nodes are outside or about to depart the scenario.
 
-A create command is entered when a node is first seen in the UDel trace file. A waypoint command is added for each datapoint inside the simulated area.
+A *create* command is entered when a node is first seen in the UDel trace file. A *waypoint* command is added for each datapoint inside the simulated area.
