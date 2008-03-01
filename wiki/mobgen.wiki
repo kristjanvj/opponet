@@ -2,7 +2,7 @@ Utility to convert simple text files into XML mobility traces
 
 = Introduction =
 
-[mobgen] is a part of the MobiTrace toolbox of the OppoNet project. mobgen generates a XML mobility trace file from a simple text based description.
+[mobgen] is a part of the MobiTrace toolbox of the OppoNet project. mobgen generates a [TraceFileFormat XML mobility trace file] from a simple text based description.
 
 = Usage =
 
@@ -17,3 +17,30 @@ Example:
 {{{
   mobgen -f textfile outfile.xml
 }}}
+
+= Input file format =
+
+A simple flat text format is used for specification of mobility in this approach. It has been found to be somewhat easier than [TraceFileFormat XML traces] to generate by hand for small simulations and test cases. 
+
+One event is speciﬁed per line in the input ﬁle, whose format is as follows:
+{{{
+{command} {time} {node} (...)
+}}}
+*command* is create, destroy or waypoint. *time* is in seconds from the beginning of the scenario. *node* is an integer uniquely identifying the node.
+
+{{{
+create {time} {node} {x y} (type)
+}}}
+*create* speciﬁes creation of a mobile node at a speciﬁed time and location. Type is an optional parameter, specifying the type of node to be created. This string must correspond to an !BasicMobility-derived module in the simulation.
+
+{{{
+destroy {time} {node}
+}}}
+*destroy* speciﬁes the destruction of a node. A negative or zero time means that the node will be destroyed node after the last leg of its journey is travelled and its ﬁnal pause is done. A destroy event with a speciﬁed time will destroy the node at that exact time, regardless of any remaining waypoint events.
+
+{{{
+waypoint {time} {node} {x y} {velocity} (pause)
+}}}
+*waypoint* speciﬁes the (x,y) coordinates of next waypoint, its velocity and, optionally, a pause time at the destination. Normally distributed variations of velocity and pause
+times are supported. An activation time less than zero means that the time of travel is deduced from the distance to the next waypoint and the speciﬁed velocity. If however
+the next consecutive event speciﬁes a time, the velocity is deduced from the distance and travel time.
