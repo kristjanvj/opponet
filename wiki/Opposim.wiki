@@ -21,6 +21,11 @@ Type *make* to build the executable, which will be named *opposim*.
 
 = Running opposim =
 
+The XML trace file to be processed by the factory must be specified in an ini file under the _Parameters_ section, e.g.
+{{{
+  square.factory.traceFile = "mobtrace1.xml";  # For trace mobility
+}}}
+
 Two ini files are provided to run the opposim simulation:
 
   *  trace.ini specifies a mobility trace XML file to be loaded into the node factory on startup. Enter *./opposim -f trace.ini* to run.
