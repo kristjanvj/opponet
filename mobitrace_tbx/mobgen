@@ -53,6 +53,10 @@ import math;
 import string
 from tracexml import *
 from tracesupport import *
+from random import SystemRandom
+
+myrand = SystemRandom();
+
 
 class processInfo:
   def __init__(self,curTime,curx,cury):
@@ -71,7 +75,7 @@ class lineInfo:
   
 curProcessInfo = {};
 
-def parseFile(in_file,out_file):
+def parseFile(in_file,out_file,random):
   """
   Parse an input file and generate XML representation.  
   """
@@ -111,7 +115,6 @@ def parseFile(in_file,out_file):
       if len(symbols) < 3:
         error("Insufficient arguments",line,linecount); 
         continue;
-#        raise Usage("%s (%d)" % (command,linecount));   # TODO: HANDLE BETTER     
       command = symbols[0];
       command = command.lower();
       try:
@@ -147,7 +150,7 @@ def parseFile(in_file,out_file):
         elif command_kind=="destroy":
           handleDestroyCommand(doc,root,curCommandInfo.symbols);
         elif command_kind=="waypoint":
-          handleWaypointCommand(doc,root,curCommandInfo.symbols,nextCommandInfo.symbols);
+          handleWaypointCommand(doc,root,random,curCommandInfo.symbols,nextCommandInfo.symbols);
       except Usage,err:
         error(err.message,curCommandInfo.srcline,curCommandInfo.lineno);
         return;      
@@ -208,7 +211,7 @@ def handleDestroyCommand(doc,root,symbols):
   addDestroyNode(doc,root,id,time);
 
   
-def handleWaypointCommand(doc,root,curCommand,nextCommand):
+def handleWaypointCommand(doc,root,random,curCommand,nextCommand):
   """
   Handler for a waypoint command.
   Takes as input the xml document, tree root and the symbols parsed from 
@@ -232,10 +235,19 @@ def handleWaypointCommand(doc,root,curCommand,nextCommand):
     y = string.atof(curCommand[4]);
     if len(curCommand) >= 6:
       speed = string.atof(curCommand[5]);
+      print speed;
+      print random;
+      if random:
+        speed += myrand.normalvariate(speed,speed/2);      
+        print speed;
     if len(curCommand) >= 7:
       pause = string.atof(curCommand[6]);
+      if random:
+        pause += myrand.normalvariate(pause,pause/2);
   except ValueError, err:
     raise Usage(err);
+    
+
     
   # Use the current process time if negative time is given. The time here
   # is the activation time of the waypoint command so it is the last leg 
@@ -303,16 +315,18 @@ def main(argv=None):
     print "\n";
     try:
       try:  
-        opts, args = getopt.getopt( argv[1:], "hf", ["help","force"])                
+        opts, args = getopt.getopt( argv[1:], "hfr", ["help","force","random"])                
       except getopt.error, msg:
         raise Usage(msg)
     except Usage, err:
-      print >>sys.stderr, err.msg
+      print >>sys.stderr, err.message
       print >>sys.stderr, "for help use --help"
       return 2
             
     force=False;
+    random=False;
     # Process the command line options
+    print opts;
     for o, a in opts:
       if o in ("-h", "--help"):
         print __doc__
@@ -320,6 +334,8 @@ def main(argv=None):
         sys.exit(0)
       if o in ("-f", "--force"):
         force=True;
+      if o in ("-r", "--random"):
+        random=True;
 
     if len(args) < 2:
       print >>sys.stderr, "Input and output files not properly specified. Please see help for usage.\n\n";
@@ -339,7 +355,7 @@ def main(argv=None):
       print >>sys.stderr, "Input file '%s' does not exist.\n\n" % in_file;
       sys.exit(2);
     if os.path.exists(out_file) and not force:
-      print >>sys.stderr, "Output file '%s' exist. Use --force to overwrite.\n\n" % out_file;
+      print >>sys.stderr, "Output file '%s' exists. Use --force to overwrite.\n\n" % out_file;
       sys.exit(2);
         
     print "\nGenerating XML trace file\n";
@@ -348,7 +364,7 @@ def main(argv=None):
     if force: print "      (force replace)";
     print "\n";
     
-    parseFile(in_file,out_file);
+    parseFile(in_file,out_file,random);
                                                
       
 if __name__ == "__main__":
