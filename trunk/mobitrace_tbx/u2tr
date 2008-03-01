@@ -58,24 +58,6 @@ from tracexml import *
 from tracesupport import *
 
 
-
-
-
-class processInfo:
-  def __init__(self,curTime,curx,cury):
-    self.curTime = curTime;
-    self.curx = curx;
-    self.cury = cury;
-   
-   
-class lineInfo:
-  def __init__(self,command,srcline,lineno,symbols):
-    self.command = command;
-    self.srcline = srcline;
-    self.lineno = lineno;
-    self.symbols = symbols;   
-   
-  
 instantiated_nodes = [];
 
 def parseFile(in_file,out_file):
