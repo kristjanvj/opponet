@@ -26,7 +26,7 @@ The XML trace file to be processed by the factory must be specified in an ini fi
   square.factory.traceFile = "mobtrace1.xml";  # For trace mobility
 }}}
 
-Two ini files are provided to run the opposim simulation:
+Two ini files are provided to run the opposim simulation with the provided trace files:
 
   *  trace.ini specifies a mobility trace XML file to be loaded into the node factory on startup. Enter *./opposim -f trace.ini* to run.
   *  contact.ini specifies a contact trace XML file to be loaded into the node factory on startup. Enter *./opposim -f contact.ini* to run.
