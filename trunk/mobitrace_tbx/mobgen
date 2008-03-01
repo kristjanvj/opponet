@@ -17,6 +17,9 @@ Usage:
     options:
     -h|--help:    Display help text.
     -f|--force:   Force overwriting of an existing output file.
+    -r|--random:  Simple normally distributed variation of the velocity and
+                  speed. The standard deviation is fixed at 1/2 the value
+                  (speed or pause).
     
   Example:
     mobgen -f textfile outfile.xml
