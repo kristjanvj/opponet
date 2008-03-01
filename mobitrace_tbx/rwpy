@@ -214,7 +214,7 @@ def main(argv=None):
       except getopt.error, msg:
         raise Usage(msg)
     except Usage, err:
-      print >>sys.stderr, err.msg
+      print >>sys.stderr, err.message
       print >>sys.stderr, "for help use --help"
       return 2
       
