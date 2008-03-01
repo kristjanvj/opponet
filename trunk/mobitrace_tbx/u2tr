@@ -11,7 +11,9 @@ effort to create software and modules for support of modeling of opportunistic
 wireless systems in OMNeT++. Project hompage: http://www.ee.kth.se/lcn/opponet.
 
 u2tr generates a XML mobility trace file from a UDel (http://udelmodels.eecis.udel.edu)
-mobility simulator output file.
+mobility simulator output file. See the reference on page 
+http://udelmodels.eecis.udel.edu/download/ManualsAndTutorials/FileFormats.htm
+for further reference.
 
 Usage:
   u2tr [options] {input file} {output file}
@@ -104,9 +106,7 @@ def parseFile(in_file,out_file):
 
       # Skip any empty lines after stripping and comment slicing
       if len(line)==0: continue;
-      
-#      print line;
-      
+          
       # Split on a space. Commands are converted to lowercase to ensure
       # case insensitivity in parsing.
       symbols = line.split();
@@ -126,7 +126,12 @@ def parseFile(in_file,out_file):
         raise Usage(err);
 
       if host_type.upper() != "MOBILE-HOST":
+        # Lets silently skip all nodes other than MOBILE-HOST at the moment.
         #error("Unexpected host type for a mobile node",line,linecount); 
+        continue;
+        
+      # Skip nodes which are outside the simulated area or about to exit
+      if floor_num == 100000 or floor_num == 100001:
         continue;
 
       coords = coords.strip("(");
@@ -136,7 +141,7 @@ def parseFile(in_file,out_file):
       x = string.atof(ch[0]);
       y = string.atof(ch[1]);
       z = string.atof(ch[2]);
-
+      
       # TODO: The node type ids of UDel are not currently supported. Add mapping of
       #       UDel node type id to BasicMobility-derived classes.
       if not node_id in instantiated_nodes:
