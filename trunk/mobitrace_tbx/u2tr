@@ -1,0 +1,230 @@
+#!/usr/bin/env python
+
+"""
+u2tr 1.0
+
+Author: Kristjan V. Jonsson (kristjanvj@gmail.com)
+        (c) Kristjan V. Jonsson (2007)
+        
+Part of the MobiTrace toolbox of the OppoNet project. OppoNet is a open-source
+effort to create software and modules for support of modeling of opportunistic
+wireless systems in OMNeT++. Project hompage: http://www.ee.kth.se/lcn/opponet.
+
+u2tr generates a XML mobility trace file from a UDel (http://udelmodels.eecis.udel.edu)
+mobility simulator output file.
+
+Usage:
+  u2tr [options] {input file} {output file}
+    options:
+    -h|--help:    Display help text.
+    -f|--force:   Force overwriting of an existing output file.
+    
+  Example:
+    u2tr -f textfile outfile.xml
+"""
+
+# =============================================================================
+#
+# LICENSING
+#
+# =============================================================================
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version 3
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+# =============================================================================
+
+__AUTHOR__  = "Kristjan V. Jonsson"
+__VERSION__ = 1.0
+
+import sys
+import os
+import getopt
+import math;
+import string
+from tracexml import *
+from tracesupport import *
+
+
+
+
+
+class processInfo:
+  def __init__(self,curTime,curx,cury):
+    self.curTime = curTime;
+    self.curx = curx;
+    self.cury = cury;
+   
+   
+class lineInfo:
+  def __init__(self,command,srcline,lineno,symbols):
+    self.command = command;
+    self.srcline = srcline;
+    self.lineno = lineno;
+    self.symbols = symbols;   
+   
+  
+instantiated_nodes = [];
+
+def parseFile(in_file,out_file):
+  """
+  Parse an input file and generate XML representation.  
+  """
+  
+  linecount=0;
+  
+  curProcessTime = {};
+  
+  commands = {}
+    
+  try:
+    infile=open(in_file,"r");
+    doc,root = createRootNode();
+    
+    line = "";
+    for line in infile:
+      linecount+=1;            
+            
+      # Strip end of line character
+      line = line.strip("\n");
+      # Strip away whitespace
+      line = line.strip();
+
+      # Skip any empty lines after stripping and comment slicing
+      if len(line)==0: continue;
+      
+      print line;
+      
+      # Split on a space. Commands are converted to lowercase to ensure
+      # case insensitivity in parsing.
+      symbols = line.split();
+      if len(symbols) < 10:
+        error("Insufficient arguments",line,linecount); 
+        continue;
+        
+      #NodeID Time (XCoordinate,YCoordinate,ZCoordinate) NotUsed NotUsed HostType # NodeType FloorNum TaskNum
+      
+      try:      
+        node_id = string.atoi(symbols[0]);
+        time = string.atof(symbols[1]);
+        coords = symbols[2];
+        host_type = symbols[5];
+        node_type = string.atoi(symbols[7]);
+        floor_num = string.atoi(symbols[8]);
+        task_num = string.atoi(symbols[9]);        
+      except ValueError, err:
+        raise Usage(err);
+
+      if host_type.upper() != "MOBILE-HOST":
+        #error("Unexpected host type for a mobile node",line,linecount); 
+        continue;
+
+      coords = coords.strip("(");
+      coords = coords.strip(")");
+      coords = coords.strip();
+      ch = coords.split(",");
+      x = string.atof(ch[0]);
+      y = string.atof(ch[1]);
+      z = string.atof(ch[2]);
+
+      # TODO: The node type ids of UDel are not currently supported. Add mapping of
+      #       UDel node type id to BasicMobility-derived classes.
+#      print node_id;
+#      print instantiated_nodes;
+#      print time;
+      if not node_id in instantiated_nodes:
+        addCreateNode(doc,root,node_id,time,x,y);        
+        instantiated_nodes.append(node_id);
+        
+      # The node has zero speed as an entry is generated per time unit in the simulator.
+      # This can potentially be a huge file. Check for ways to compress this into a better 
+      # representation for the factory.
+      addWaypointNode(doc,root,node_id,time,x,y,0.0);
+      
+    #saveDocument(doc,out_file);   
+    showDocument(doc);
+
+  finally:
+    infile.close();                     
+      
+    
+def error(msg,srcline,lineno):
+  """
+  Format and output an error message
+  """
+  print >>sys.stderr, "ERROR in line %d: '%s'.\n    Source line: '%s'" % (lineno,msg,srcline);
+    
+#
+# Main method. 
+# This is the body of the program. Handles reading and processing of command line options.
+#
+def main(argv=None):
+  if argv is None:
+    argv = sys.argv
+
+    print "\n";
+    print "u2tr";
+    print "\n";
+    try:
+      try:  
+        opts, args = getopt.getopt( argv[1:], "hfr", ["help","force","random"])                
+      except getopt.error, msg:
+        raise Usage(msg)
+    except Usage, err:
+      print >>sys.stderr, err.message
+      print >>sys.stderr, "for help use --help"
+      return 2
+            
+    force=False;
+    # Process the command line options
+    for o, a in opts:
+      if o in ("-h", "--help"):
+        print __doc__
+        print "\n"
+        sys.exit(0)
+      if o in ("-f", "--force"):
+        force=True;
+
+    if len(args) < 2:
+      print >>sys.stderr, "Input and output files not properly specified. Please see help for usage.\n\n";
+      sys.exit(2);     
+    in_file=args[0];
+    out_file=args[1];
+
+    # Error if the filenames are unspecified
+    if in_file == "":
+      print >>sys.stderr, "Input file unspecified specified\n\n";
+      sys.exit(2);
+    if in_file == "":
+      print >>sys.stderr, "No filename specified\n\n";
+      sys.exit(2);
+
+    if not os.path.exists(in_file):
+      print >>sys.stderr, "Input file '%s' does not exist.\n\n" % in_file;
+      sys.exit(2);
+    if os.path.exists(out_file) and not force:
+      print >>sys.stderr, "Output file '%s' exists. Use --force to overwrite.\n\n" % out_file;
+      sys.exit(2);
+        
+    print "\nGenerating XML trace file\n";
+    print "    source file: %s" % in_file;
+    print "    output file: %s" % out_file;
+    if force: print "      (force replace)";
+    print "\n";
+    
+    parseFile(in_file,out_file);
+                                               
+      
+if __name__ == "__main__":
+  sys.exit(main())  
+
