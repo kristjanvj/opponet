@@ -6,10 +6,14 @@ Utility to convert simple text files into XML mobility traces
 
 = Usage =
 
+Please refer to the general notes on the MobiTrace toolbox page. The script takes the following parameters:
+{{{
   mobgen {options} {input file} {output file}
     options:
     -h|--help:    Display help text.
     -f|--force:   Force overwriting of an existing output file.
-    
-  Example:
-    mobgen -f textfile outfile.xml
+}}}    
+Example:
+{{{
+  mobgen -f textfile outfile.xml
+}}}
