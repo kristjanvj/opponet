@@ -40,4 +40,4 @@ The demo simulation, defined in trace.ini, spawns three nodes during the simulat
 
 == Contact trace demonstration ==
 
-The contact trace simulation instantiates nodes of the type SimpleTraceNode. These are identical to the SimpleNode compound module, apart from a ContactSubscriber module. The ContactNotifier is instantiated in this case in the navigator role through the definition in the XML trace file.
+The contact trace simulation instantiates nodes of the type SimpleContactNode. These are identical to the SimpleNode compound module, apart from a ContactSubscriber module. The ContactNotifier is instantiated in this case in the navigator role through the definition in the XML trace file.
