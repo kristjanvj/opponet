@@ -78,7 +78,9 @@ instantiated_nodes = [];
 
 def parseFile(in_file,out_file):
   """
-  Parse an input file and generate XML representation.  
+  Parse an input file and generate XML representation.  The format of the UDel 
+  generated file is assumed to be the following:  
+    NodeID Time (XCoordinate,YCoordinate,ZCoordinate) NotUsed NotUsed HostType # NodeType FloorNum TaskNum
   """
   
   linecount=0;
@@ -103,7 +105,7 @@ def parseFile(in_file,out_file):
       # Skip any empty lines after stripping and comment slicing
       if len(line)==0: continue;
       
-      print line;
+#      print line;
       
       # Split on a space. Commands are converted to lowercase to ensure
       # case insensitivity in parsing.
@@ -111,9 +113,7 @@ def parseFile(in_file,out_file):
       if len(symbols) < 10:
         error("Insufficient arguments",line,linecount); 
         continue;
-        
-      #NodeID Time (XCoordinate,YCoordinate,ZCoordinate) NotUsed NotUsed HostType # NodeType FloorNum TaskNum
-      
+              
       try:      
         node_id = string.atoi(symbols[0]);
         time = string.atof(symbols[1]);
@@ -139,20 +139,17 @@ def parseFile(in_file,out_file):
 
       # TODO: The node type ids of UDel are not currently supported. Add mapping of
       #       UDel node type id to BasicMobility-derived classes.
-#      print node_id;
-#      print instantiated_nodes;
-#      print time;
       if not node_id in instantiated_nodes:
         addCreateNode(doc,root,node_id,time,x,y);        
         instantiated_nodes.append(node_id);
         
       # The node has zero speed as an entry is generated per time unit in the simulator.
-      # This can potentially be a huge file. Check for ways to compress this into a better 
-      # representation for the factory.
+      # This can potentially be a huge file. 
+      # TODO: Check for ways to compress this into a better representation for the factory.
       addWaypointNode(doc,root,node_id,time,x,y,0.0);
       
-    #saveDocument(doc,out_file);   
-    showDocument(doc);
+    saveDocument(doc,out_file);   
+    #showDocument(doc);
 
   finally:
     infile.close();                     
