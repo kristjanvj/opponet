@@ -44,6 +44,7 @@ import os;
 import getopt
 import string
 from topo import *
+from generate import *
 from random import *
 from decimal import *
 #from rpy import *
@@ -134,7 +135,7 @@ def generate(basename,nodes,t,rt,entries,arrival_rate,debug=0):
   
   doc,root = createRootNode()
     
-  print "Generating for rate " + str(arrival_rate)
+  if debug>0:print "Generating for rate " + str(arrival_rate)
   ng = NodeGeneration(num_generators, [arrival_rate] * num_generators) 
 
   seed()
