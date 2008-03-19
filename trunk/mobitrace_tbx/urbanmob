@@ -1,0 +1,261 @@
+#!/usr/bin/env python
+
+"""
+urbanmob 1.0
+
+Authors: Olafur R. Helgason (olafur.helgason@gmail.com and
+         Kristjan V. Jonsson (kristjanvj@gmail.com)
+         (c) Olafur R. Helgason (2007)
+        
+Part of the MobiTrace toolbox of the OppoNet project. OppoNet is a open-source
+effort to create software and modules for support of modeling of opportunistic
+wireless systems in OMNeT++. Project hompage: http://www.ee.kth.se/lcn/opponet.
+"""
+
+# =============================================================================
+#
+# LICENSING
+#
+# =============================================================================
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version 3
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+# =============================================================================
+
+__AUTHOR__  = "Olafur R. Helgason"
+__AUTHOR__  = "Kristjan V. Jonsson"
+__VERSION__ = 1.0
+
+MIN_SPEED = 0.5
+
+import sys
+import os;
+import getopt
+import string
+from topo import *
+from random import *
+from decimal import *
+#from rpy import *
+from tracexml import *
+from tracesupport import *
+
+# TODO: ROUTING READS STRINGS NOT ELEMENTS!
+def readTopology(filename):
+  
+  try:
+    tf = open(filename,"r");
+    
+    t = Topology()
+    n = {}
+    e  = []
+    rt = {}
+    section = "";    
+    
+    for line in tf:
+      # Slice away comments
+      line = line.strip("\n");
+      p=line.find("#");
+      if p != -1: 
+        line = line[0:p];
+
+      # Strip away whitespace
+      line = line.strip();
+      if line == "": continue;
+
+      line = line.lower();
+
+      if line.find("[") != -1:
+        section = line.strip("[]");
+      else:
+        elements = line.split(); 
+        if section == "nodes":
+          n[string.atoi(elements[0])] = Node(string.atoi(elements[0]),Position(string.atoi(elements[1]),string.atoi(elements[2])))        
+        elif section == "streets":
+          t.add_street(Street(string.atoi(elements[0]),n[string.atoi(elements[1])],n[string.atoi(elements[2])]))          
+        elif section == "entries":
+          e.append(string.atoi(elements[0]))          
+        elif section == "routing":
+#          print line;
+          parts = line.split("=")
+          nstr = parts[0].strip();
+          nstr = nstr[1:len(nstr)-1]
+          nodes = nstr.split(",");
+          try:
+            n1=string.atoi(nodes[0]);
+          except ValueError:
+            n1=None;
+          try:            
+            n2=string.atoi(nodes[1]);
+          except ValueError:
+            n2=None;
+          probs = parts[1].split("),(");
+          plist=[];
+          for prob in probs:
+            p = prob.strip();
+            p = p.strip("(");
+            p = p.strip(")");
+            ps = p.split(",");            
+            try:
+              n=string.atoi(ps[0]);
+            except ValueError:
+              n=None;
+            pr=string.atof(ps[1]);
+            plist.append((n,pr));
+          rt[(n1,n2)]=plist;
+#          print "(%s,%s)=%s" % (n1,n2,plist);
+        else:
+          raise("Unknown section label");
+               
+    tf.close();
+       
+    return t,rt,e;
+
+  except IOError, error:
+    print error;
+    raise Exception("Topology undefined");
+
+
+def generate(basename,nodes,t,rt,entries,arrival_rate,debug=0):
+
+  v_min = 0.5
+  v_max = 1.5
+  num_generators = len(entries)
+  
+  doc,root = createRootNode()
+    
+  print "Generating for rate " + str(arrival_rate)
+  ng = NodeGeneration(num_generators, [arrival_rate] * num_generators) 
+
+  seed()
+  xmlname = basename + "." + str(arrival_rate) + ".xml"
+
+  gen_events = ng.generate(nodes)
+  nodelist = t.nodes()
+  node_id = 1
+  
+  for gen_ev in gen_events:
+    entry_time = gen_ev[0]
+    entry_node = filter(lambda n: n.id() == entries[gen_ev[1]], nodelist)[0] 
+    if debug>=1: print "CREATE t=%.2f n=%s e=%s pos=(%.2f,%.2f)" % (entry_time,node_id,entry_node,entry_node.pos().x,entry_node.pos().y);
+    addCreateNode(doc,root,node_id,entry_time,entry_node.pos().x,entry_node.pos().y);            
+    path = random_path(rt, entry_node.id())
+    time = entry_time
+    for node in path:
+      if(path.index(node) == 0):
+        continue
+      src = filter(lambda n: n.id() == path[path.index(node)-1],nodelist)[0]
+      dst = filter(lambda n: n.id() == node, nodelist)[0]
+      dist = Position.distance(src.pos(), dst.pos())
+      speed = uniform(v_min, v_max)
+      traveltime = dist/speed
+      if debug>=1: print "WAYPOINT t=%.2f n=%s pos=(%.2f,%.2f) sp=%.2f" % (time,node_id,dst.pos().x,dst.pos().y,speed);
+      addWaypointNode(doc,root,node_id,time,dst.pos().x,dst.pos().y,speed);
+      time += traveltime
+    if debug>=1: print "DESTROY t=%.2f n=%s" % (time,node_id);
+    addDestroyNode(doc,root,node_id,time);
+    node_id += 1
+    
+  # Save the trace
+  if debug>=2: showDocument(doc)
+  saveDocument(doc,xmlname);        
+
+#
+# Main method. 
+# This is the body of the program. Handles reading and processing of command line options.
+#
+def main(argv=None):
+  if argv is None:
+    argv = sys.argv
+
+    print "\n";
+    print "UrbanMobility";
+    print "Mobility trace generator";
+    print "\n";
+    try:
+      try:  
+        opts, args = getopt.getopt( argv[1:], "hn:a:t:l:", \
+                                    ["help","nodes=","arrival-rate=","topology-file=","log-level="])                
+      except getopt.error, msg:
+        raise Usage(msg)
+    except Usage, err:
+      print >>sys.stderr, err.message
+      print >>sys.stderr, "for help use --help"
+      return 2
+                
+    nodes = 0;                 
+    arrival_rate = 0.0;         
+    topo_file = "";   
+    basename = "";    
+    log_level = 0;
+                
+    # Process the command line options
+    for o, a in opts:
+      if o in ("-h", "--help"):
+        print __doc__
+        print "\n"
+        sys.exit(0)         
+      if o in ("-n", "--nodes"):
+        try:
+          nodes = string.atoi(a);                                      
+        except ValueError:
+          print >>sys.stderr, "Invalid value for number of nodes";
+          return 2;
+      if o in ("-a", "--arrival-rate"):                 
+        try:
+          arrival_rate = string.atof(a);                                      
+        except ValueError:
+          print >>sys.stderr, "Invalid value for arrival rate";
+          return 2;
+      if o in ("-t", "--topology-file"):
+        topo_file = a;
+        if not os.path.exists(topo_file):
+          print >>sys.stderr, "Topology file not found";
+          return 2;
+        basename,ext = topo_file.split(".");
+      if o in ("-l", "--log-level"):
+        try:
+          log_level = string.atof(a);                                      
+        except ValueError:
+          print >>sys.stderr, "Invalid value for log level";
+          return 2;        
+                
+    if nodes < 1:
+      print >>sys.stderr, "No nodes specified";
+      return 2;
+      
+    if arrival_rate <= 0.0:
+      print >>sys.stderr, "Invalid arrival rate";
+      return 2;
+    
+    if topo_file == "":
+      print >>sys.stderr, "Unspecified topology file";
+      return 2;
+    
+                 
+    t = None;
+    rt = {};
+    entries = [];
+    try:
+      t,rt,entries = readTopology(topo_file)             
+      if log_level>0: t.debug()
+      verify_rtable(rt,t)             
+    except Exception, ex:
+      print ex;
+      return 2;                   
+                                                                                          
+    # Generate the trace                                                                
+    generate(basename,nodes,t,rt,entries,arrival_rate,log_level)
+      
+if __name__ == "__main__":
+  sys.exit(main())  
