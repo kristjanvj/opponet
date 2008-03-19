@@ -2,6 +2,7 @@
 #
 # Crossroads.topo
 #
+# Topology file for the urbanmob mobility generator.
 # A simple topology file for a street grid consisting of four streets in a crossroads configuration.
 #
 
@@ -25,7 +26,8 @@
 4 4 5
 
 #
-# This section defines which nodes are entries to the scenario
+# This section defines which nodes are entries to the scenario.
+# Nodes are generated with the arrival rate specified on the command line at the entries.
 #
 [Entries]
 1
