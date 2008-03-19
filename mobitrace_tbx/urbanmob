@@ -10,6 +10,21 @@ Authors: Olafur R. Helgason (olafur.helgason@gmail.com and
 Part of the MobiTrace toolbox of the OppoNet project. OppoNet is a open-source
 effort to create software and modules for support of modeling of opportunistic
 wireless systems in OMNeT++. Project hompage: http://www.ee.kth.se/lcn/opponet.
+
+Urbanmob generates a xml mobility file from a topology description using the node
+number and arrival rate specified on the command line.
+
+Usage:
+  urbanmob [options]
+    options:
+    -h|--help:          Display help text.
+    -n|--nodes:         Number of nodes to generate
+    -a|--arrival-rate:  Arrival rate of nodes at each entry
+    -t|--topology-file: Topology specification file
+    -l|--log-level:     Log level for debug purposes. 0=none, 1=events, 2=xml
+    
+  Example:
+    urbanmob --nodes 10 --arrival-rate 0.2 --topology-file crossroads.topo
 """
 
 # =============================================================================
