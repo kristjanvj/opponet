@@ -62,11 +62,9 @@ from topo import *
 from generate import *
 from random import *
 from decimal import *
-#from rpy import *
 from tracexml import *
 from tracesupport import *
 
-# TODO: ROUTING READS STRINGS NOT ELEMENTS!
 def readTopology(filename):
   
   try:
@@ -102,7 +100,6 @@ def readTopology(filename):
         elif section == "entries":
           e.append(string.atoi(elements[0]))          
         elif section == "routing":
-#          print line;
           parts = line.split("=")
           nstr = parts[0].strip();
           nstr = nstr[1:len(nstr)-1]
@@ -129,7 +126,6 @@ def readTopology(filename):
             pr=string.atof(ps[1]);
             plist.append((n,pr));
           rt[(n1,n2)]=plist;
-#          print "(%s,%s)=%s" % (n1,n2,plist);
         else:
           raise("Unknown section label");
                
