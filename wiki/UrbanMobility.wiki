@@ -2,19 +2,28 @@ Simple mobility generator for street scenarios
 
 = Introduction =
 
-The *UrbanMobility* tool is a part of the MobiTrace toolbox for opponet. 
-It generates mobility patterns of nodes
-(pedestrians, vehicles etc.) in an urban area. It takes as in-
-put a map, routing probabilities and a set of generators. The
-map speciﬁes a grid of streets and intersections in the form
-of a graph of nodes and vertices, along with the node po-
-sitions. Node generators can be attached to positions on
-the map where each generator is essentially an arrival pro-
-cess of nodes, with inter-arrival time and node speed given
-by some probability distributions. The routing probabilities
-specify node behavior at intersections, i.e. with which prob-
-ability each street at the intersection is next selected by the
-node. Intersections can also have exits where
-nodes can leave the area (for underground transportation,
-area boundary etc.). The UrbanMobility tool generates a
-[TraceFileFormat mobility trace] in XML format.
+The *UrbanMobility* (urbanmob) tool is a part of the MobiTrace toolbox for opponet. 
+
+It generates mobility patterns of nodes (pedestrians, vehicles etc.) in an urban area. It takes as input a map, routing probabilities and a set of generators. The map speciﬁes a grid of streets and intersections in the form of a graph of nodes and vertices, along with the node positions. Node generators can be attached to positions (entries) on the map where each generator is essentially an arrival process of nodes, with inter-arrival time and node speed given by some probability distributions. The routing probabilities specify node behavior at intersections, i.e. with which probability each street at the intersection is next selected by the node. Intersections can also have exits where nodes can leave the area (for derground transportation, area boundary etc.). The simulated street scenario is specified in a topology file as discussed in a following section.
+
+The UrbanMobility tool generates a [TraceFileFormat mobility trace] in XML format.
+
+= Topology file =
+
+The topology file is a text file the following form:
+
+{{{
+[Nodes]
+{node number} {x coordinate} {y coordinate}
+
+[Streets]
+{street number} {node a} {node b}
+
+[Entries]
+{node number}
+
+[Routing]
+({current node},{previous node}) = ({next node},{probability}), ...
+}}}
+
+Destination nodes specified in routing cannot include previous or current node. Additionally, the routing probabilities for the destinations must add up to one.
