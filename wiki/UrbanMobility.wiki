@@ -27,3 +27,62 @@ The topology file is a text file the following form:
 }}}
 
 Destination nodes specified in routing cannot include previous or current node. Additionally, the routing probabilities for the destinations must add up to one.
+
+
+== Example ==
+
+This is an example of a simple topology file of a crossroads scenario
+
+{{{
+
+#
+# Crossroads.topo
+#
+# Topology file for the urbanmob mobility generator.
+# A simple topology file for a street grid consisting of four streets in a crossroads configuration.
+#
+
+#
+# This section defines the nodes in the scenario
+#
+[Nodes]
+1 0 500
+2 500 0
+3 1000 500
+4 500 1000
+5 500 500
+
+#
+# This section configures legs between nodes, i.e. the streets
+#
+[Streets]
+1 1 5
+2 2 5
+3 3 5
+4 4 5
+
+#
+# This section defines which nodes are entries to the scenario.
+# Nodes are generated with the arrival rate specified on the command line at the entries.
+#
+[Entries]
+1
+2
+
+#
+# This section defines the routing.
+#
+[Routing]
+(1,None) = (5,1.0)
+(2,None) = (5,1.0)
+(3,None) = (5,1.0)
+(4,None) = (5,1.0)
+(5,1) = (2,0.25),(3,0.5),(4,0.25)
+(5,2) = (1,0.25),(3,0.5),(4,0.25)
+(5,3) = (1,0.5),(2,0.25),(4,0.25)
+(5,4) = (1,0.25),(2,0.5),(3,0.25)      
+(1,5) = (None,1.0)
+(2,5) = (None,1.0)
+(3,5) = (None,1.0)
+(4,5) = (None,1.0)      
+}}}
