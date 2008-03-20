@@ -8,6 +8,25 @@ It generates mobility patterns of nodes (pedestrians, vehicles etc.) in an urban
 
 The UrbanMobility tool generates a [TraceFileFormat mobility trace] in XML format.
 
+= Parameters and usage =
+
+Please refer to the general notes on the MobiTrace toolbox page. The script takes the following parameters:
+
+{{{
+  urbanmob [options]
+    options:
+    -h|--help:          Display help text.
+    -n|--nodes:         Number of nodes to generate
+    -a|--arrival-rate:  Arrival rate of nodes at each entry
+    -t|--topology-file: Topology specification file
+    -l|--log-level:     Log level for debug purposes. 0=none, 1=events, 2=xml
+}}}    
+  
+Example:
+{{{
+    urbanmob --nodes 10 --arrival-rate 0.2 --topology-file crossroads.topo
+}}}
+
 = Topology file =
 
 The topology file is a text file the following form:
