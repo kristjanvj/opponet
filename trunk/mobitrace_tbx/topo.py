@@ -38,6 +38,7 @@ __AUTHOR__  = "Olafur R. Helgason"
 __AUTHOR__  = "Kristjan V. Jonsson"
 __VERSION__ = 1.0
 
+import string
 from math import sqrt
 from random import *
 
@@ -123,7 +124,7 @@ class Topology:
   def add_street(self, street):
     # TODO: Verifiy that there is only one street from node1 to node
     if(self.__streetlist.count(street) != 0):
-      raise 'add_street error'
+      raise Exception("Street already exists")
     else:
       self.__streetlist.append(street)
     nodes = street.get_nodes()
@@ -141,16 +142,238 @@ class Topology:
     return self.__streetlist
   
   def debug(self):
-    print "Neigbors:"
+    print "\nTopology debug listing:";
+    print "\nNeigbors:"
     for node in self.__nodelist:
       nlist = node.neighbours()
       outstr = "node " + str(node) + ': '
       for neigh in nlist:
         outstr += str(neigh) + ' '
       print outstr
-    print "Street length:"
+    print "\nStreet lengths:"
     for street in self.__streetlist:
       print "street " + str(street) + ' = ' + str(street.length())
+    print;  
+      
+      
+class TopoParser:
+  """
+  Topology file parser class.
+  """
+       
+  
+  def parse(self,filename,log_level=0):
+    """
+    Reads a topology specification file. 
+    
+    Returns Topology object, routing map and entry list
+    
+    The format of the topology file is as follows:
+    
+      [Nodes]
+      {node number} {x coordinate} {y coordinate}
+
+      [Streets]
+      {street number} {node a} {node b}
+
+      [Entries]
+      {node number}
+
+      [Routing]
+      ({current node},{previous node}) = ({next node},{probability}), ...  
+    """
+        
+    if log_level>0: print "Parsing topo file %s" % filename;    
+        
+    try:
+      tf = open(filename,"r");
+      
+      t = Topology()
+      n = {}
+      e  = []
+      rt = {}
+      section = "";    
+      linecount = 0;
+      
+      for line in tf:
+        # Slice away comments
+        linecount+=1
+        line = line.strip("\n");
+        p=line.find("#");
+        if p != -1: 
+          line = line[0:p];
+
+        # Strip away whitespace
+        line = line.strip();
+        if line == "": continue;
+
+        # Convert to lower case - the specification is not case sensitive
+        line = line.lower();
+
+        if line.find("[") != -1: 
+          # This is a section heading
+          section = line.strip("[]");
+          if log_level>0: print "\nSection:", section;
+        else:      
+          try:
+            if section == "nodes":
+              # Create a list of nodes. Used for creation of streets
+              self.__addTopoNode(n,line,log_level);
+            elif section == "streets":
+              # Create a street. The node must exist
+              self.__addTopoStreet(t,n,line,log_level);
+            elif section == "entries":
+              # Assign an entry to a specified node. The node must exist.
+              self.__addTopoEntry(n,e,line,log_level);
+            elif section == "routing":
+              # Add an routing entry
+              self.__addTopoRouting(n,rt,line,log_level);
+            else:
+              raise("Unknown section label");
+          except Exception, ex:
+            raise Exception( "EXCEPTION: '%s' in file '%s' -- line %d\nSource line: '%s'" % \
+                             (ex.message,filename,linecount,line));                 
+      tf.close();
+         
+      return t,rt,e;
+
+    except IOError, error:
+      print error;
+      raise Exception("Topology undefined");
+
+
+  def __addTopoNode(self,n,line,log_level=0):
+    """
+    Add a new topology node to the collection
+    """
+    elements = line.split(); 
+    
+    nodeId = self.__parseIntStr(elements[0]);
+    if nodeId == None:
+      raise Exception("Node specification invalid");
+      
+    if n.has_key(nodeId):
+      raise Exception("Node %d already exists" % nodeId);  
+      
+    x = self.__parseIntStr(elements[1]);
+    y = self.__parseIntStr(elements[2]);
+    if x == None or y == None:
+      raise Exception("Invalid node location");
+      
+    n[nodeId] = Node(nodeId,Position(x,y));
+    if log_level>0: print "Adding node ", nodeId, " at location",x,y;
+    
+
+  def __addTopoStreet(self,t,n,line,log_level=0):
+    """
+    add a new street to the topology
+    """
+    elements = line.split(); 
+    
+    streetId = self.__parseIntStr(elements[0]);
+    
+    nodeA = self.__parseIntStr(elements[1]);
+    nodeB = self.__parseIntStr(elements[2]);  
+    if nodeA == None or nodeB == None:
+      raise Exception("Invalid node id for street %d" % streetId);
+      
+    if not n.has_key(nodeA) or not n.has_key(nodeB):
+      raise Exception("Undefined nodes used for street %d" % streetId);
+      
+    t.add_street(Street(streetId,n[nodeA],n[nodeB]))          
+    if log_level>0: print "Adding street %d -- a=%d, b=%d" % (streetId, nodeA, nodeB);
+
+
+  def __addTopoEntry(self,n,e,line,log_level=0):
+    """
+    Specify a node as an entry to the topology.
+    """
+    line = line.strip(); 
+    
+    nodeId = self.__parseIntStr(line);
+    if nodeId == None:
+      raise Exception("Node specification invalid");
+    if not n.has_key(nodeId):
+      raise Exception("Node specification invalid");  
+    e.append(nodeId)          ;
+    if log_level>0: print "Adding entrypoint at %d" % nodeId;
+    
+    
+  def __addTopoRouting(self,n,rt,line,log_level=0):
+    """
+    Add a routing entry to the topology
+    """
+    #
+    # Split the line on the =
+    #
+    parts = line.split("=")
+    if len(parts) != 2:
+      raise Exception("Invalid syntax for routing entry %s" % line);
+    
+    #
+    # Process the left side
+    #
+    
+    nstr = parts[0].strip();
+    nstr = nstr[1:len(nstr)-1]
+    nodes = nstr.split(",");
+    if len(nodes) != 2:
+      raise Exception("Invalid syntax for routing entry %s" % line);
+    
+    n1 = self.__parseIntStr(nodes[0]);
+    n2 = self.__parseIntStr(nodes[1]);
+    if ( n1 != None and not n.has_key(n1) ) or ( n2 != None and not n.has_key(n2) ):
+      raise Exception("Invalid node id for routing entry %s" % line);
+    if rt.has_key((n1,n2)):
+      raise Exception("Key (%s,%s) exists in routing table" % (n1,n2));
+    
+    #
+    # Process the right side
+    #
+    
+    # Split the list of probability pairs (node,prob)
+    probs = parts[1].split("),(");
+    plist=[];
+    for prob in probs:
+      # tidy up the pairs
+      p = prob.strip();
+      p = p.strip("(");
+      p = p.strip(")");
+      ps = p.split(","); 
+      if len(ps) != 2:
+        raise Exception("Invalid syntax for routing entry %s" % line);      
+      ndest = self.__parseIntStr(ps[0]);           
+      if ndest != None and not n.has_key(ndest):
+        raise Exception("Invalid node id for routing entry %s" % line);
+      pr = self.__parseFloatStr(ps[1]);
+      if pr == None or pr < 0 or pr > 1:
+        raise Exception("Invalid routing probability for routing entry %s" % line);
+      # Append the parsed node,prob pair to the list
+      plist.append((ndest,pr));
+    # Add a routing entry
+    rt[(n1,n2)]=plist;  
+    if log_level>0: print "Adding routing entry (%s,%s)=%s" % (n1,n2,plist);
+
+
+  def __parseIntStr(self,s):
+    """
+    Parses a string to integer. Returns None if the string is not a valid integer.
+    """
+    try:
+      return string.atoi(s);
+    except ValueError:
+      return None;
+
+      
+  def __parseFloatStr(self,s):
+    """
+    Parses a string to float. Returns None if the string is not a valid float.
+    """
+    try:
+      return string.atof(s);
+    except ValueError:
+      return None;    
+      
 
 def random_path(rtable, entry):
   path = []
@@ -163,6 +386,7 @@ def random_path(rtable, entry):
     last = temp
 #    print last,now
   return path
+
 
 def random_neighbour(now, last, rtable):
   random_intervals = []
@@ -180,6 +404,7 @@ def random_neighbour(now, last, rtable):
     raise 'Random interval error'
   neigh_idx = random_intervals.index(ival[0])
   return nlist[neigh_idx][0]
+
 
 def verify_rtable(rtable,topo):
   for node_pair, problist in rtable.iteritems():

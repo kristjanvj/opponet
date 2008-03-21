@@ -65,81 +65,18 @@ from decimal import *
 from tracexml import *
 from tracesupport import *
 
-def readTopology(filename):
-  
-  try:
-    tf = open(filename,"r");
-    
-    t = Topology()
-    n = {}
-    e  = []
-    rt = {}
-    section = "";    
-    
-    for line in tf:
-      # Slice away comments
-      line = line.strip("\n");
-      p=line.find("#");
-      if p != -1: 
-        line = line[0:p];
-
-      # Strip away whitespace
-      line = line.strip();
-      if line == "": continue;
-
-      line = line.lower();
-
-      if line.find("[") != -1:
-        section = line.strip("[]");
-      else:
-        elements = line.split(); 
-        if section == "nodes":
-          n[string.atoi(elements[0])] = Node(string.atoi(elements[0]),Position(string.atoi(elements[1]),string.atoi(elements[2])))        
-        elif section == "streets":
-          t.add_street(Street(string.atoi(elements[0]),n[string.atoi(elements[1])],n[string.atoi(elements[2])]))          
-        elif section == "entries":
-          e.append(string.atoi(elements[0]))          
-        elif section == "routing":
-          parts = line.split("=")
-          nstr = parts[0].strip();
-          nstr = nstr[1:len(nstr)-1]
-          nodes = nstr.split(",");
-          try:
-            n1=string.atoi(nodes[0]);
-          except ValueError:
-            n1=None;
-          try:            
-            n2=string.atoi(nodes[1]);
-          except ValueError:
-            n2=None;
-          probs = parts[1].split("),(");
-          plist=[];
-          for prob in probs:
-            p = prob.strip();
-            p = p.strip("(");
-            p = p.strip(")");
-            ps = p.split(",");            
-            try:
-              n=string.atoi(ps[0]);
-            except ValueError:
-              n=None;
-            pr=string.atof(ps[1]);
-            plist.append((n,pr));
-          rt[(n1,n2)]=plist;
-        else:
-          raise("Unknown section label");
-               
-    tf.close();
-       
-    return t,rt,e;
-
-  except IOError, error:
-    print error;
-    raise Exception("Topology undefined");
-
 
 def generate(basename,nodes,t,rt,entries,arrival_rate,debug=0):
-
+  """
+  Generates random routes for the specified number of nodes.
+  The topology and routing probabilities t and rt are taken as inputs, along
+  with the designated entries into the area and an arrival rate.
+  Debug controls the output: 
+    0: silent
+    1: Prints generated events
+    2: dumps the xml after creation.
+  """
+  
   v_min = 0.5
   v_max = 1.5
   num_generators = len(entries)
@@ -182,6 +119,7 @@ def generate(basename,nodes,t,rt,entries,arrival_rate,debug=0):
   if debug>=2: showDocument(doc)
   saveDocument(doc,xmlname);        
 
+
 #
 # Main method. 
 # This is the body of the program. Handles reading and processing of command line options.
@@ -193,7 +131,6 @@ def main(argv=None):
     print "\n";
     print "UrbanMobility";
     print "Mobility trace generator";
-    print "\n";
     try:
       try:  
         opts, args = getopt.getopt( argv[1:], "hn:a:t:l:", \
@@ -241,7 +178,7 @@ def main(argv=None):
         except ValueError:
           print >>sys.stderr, "Invalid value for log level";
           return 2;        
-                
+                         
     if nodes < 1:
       print >>sys.stderr, "No nodes specified";
       return 2;
@@ -254,18 +191,25 @@ def main(argv=None):
       print >>sys.stderr, "Unspecified topology file";
       return 2;
     
-                 
+    print;
+    print "  Nodes:         ", nodes;
+    print "  Arrival rate:  ", arrival_rate;      
+    print "  Topology file: ", topo_file;
+    print;
+                     
     t = None;
     rt = {};
     entries = [];
+    tparser = TopoParser();
     try:
-      t,rt,entries = readTopology(topo_file)             
-      if log_level>0: t.debug()
+      # Parse the topology file 
+      t,rt,entries = tparser.parse(topo_file,log_level)             
+      if log_level>0: t.debug(); # Show the topology debug message
       verify_rtable(rt,t)             
     except Exception, ex:
       print ex;
-      return 2;                   
-                                                                                          
+      return 2;             
+                                                                                                
     # Generate the trace                                                                
     generate(basename,nodes,t,rt,entries,arrival_rate,log_level)
       
