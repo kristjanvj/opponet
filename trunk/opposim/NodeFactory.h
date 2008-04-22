@@ -2,7 +2,7 @@
 // ***************************************************************************
 // 
 // OppoNet Project
-//// This file is a part of the opponet project, jointly managed by the 
+// This file is a part of the opponet project, jointly managed by the 
 // Laboratory for Communications Networks (LCN) at KTH in Stockholm, Sweden 
 // and the Laboratory for Dependable Secure Systems (LDSS) at Reykjavik
 // University, Iceland.
@@ -82,7 +82,7 @@ class NodeFactory : public cSimpleModule
 		
 		/** @brief The type of trace in effect. Either mobility or contact traces can be 
 		           in effect at the same time. Trace types cannot be mixed. */
-		TRACE_TYPE m_traceType;
+		TRACE_TYPE m_traceType;
     /** @brief The generated modules */
 		CREATED_ITEMS_VECTOR_TYPE m_createdItems;
   
