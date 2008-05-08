@@ -2,7 +2,7 @@
 // ***************************************************************************
 // 
 // OppoNet Project
-//// This file is a part of the opponet project, jointly managed by the 
+// This file is a part of the opponet project, jointly managed by the 
 // Laboratory for Communications Networks (LCN) at KTH in Stockholm, Sweden 
 // and the Laboratory for Dependable Secure Systems (LDSS) at Reykjavik
 // University, Iceland.
