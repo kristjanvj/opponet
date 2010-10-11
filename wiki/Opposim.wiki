@@ -6,7 +6,7 @@ Opposim is a very simple demonstration for the [OMNETPP OMNeT++] compontents of 
 
 = Building opposim =
 
-Download, install and build the latest [OMNETPP OMNeT++] and [MobilityFramework Mobility Framework] releases. See the installation and build instructions for the projects for further details. Opposim was developed on a Linux platform. Both OMNeT++ and MF are available for Windows platforms so porting to that platform should prove to be straight forward. We assume that OMNeT++ and MF are built and installed in a subdirectory of the users home directory.
+Download, install and build the latest [OMNETPP OMNeT++] and [MobilityFramework Mobility Framework] releases. See the installation and build instructions for the projects for further details. Opposim was developed on a Linux platform (Fedora 6 to be exact) but should build on other OSes supported by OMNeT++. Both OMNeT++ and MF are available for Windows platforms so porting to that platform should prove to be straight forward. We assume that OMNeT++ and MF are built and installed in a subdirectory of the users home directory.
 
 Get the latest version of opposim from the downloads area or via anonymous subversion access:
 {{{
