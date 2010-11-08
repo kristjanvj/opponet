@@ -1,5 +1,7 @@
 = Installation instructions for the 4.1 port of Opposim for OMNeT++ 4.1 =
 
+The port is available as a tarball under downloads -- it is not a part of the sourcetree at this time.
+
   * Create a new OMNeT++ project in the project explorer
   * You have to build and install the mobility framework (MF) for OMNeT 4 and import as a project into the omnet workspace
   * Extract the opposim port and import as a project into the workspace.
